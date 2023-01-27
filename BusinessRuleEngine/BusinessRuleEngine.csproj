@@ -9,7 +9,9 @@
   <ItemGroup>
 	<!--The line below is for windows authentication-->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="6.0.11" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
 </Project>
