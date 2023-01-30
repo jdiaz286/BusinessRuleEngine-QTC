@@ -2,7 +2,7 @@
 {
     public class Expression
     {
-        public Guid ExpressionID { get; init; }
+        public string ExpressionID { get; init; }
 
         public string LeftOperandType { get; init; }
 
