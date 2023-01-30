@@ -75,7 +75,7 @@ namespace BusinessRuleEngine.Controllers
             }
 
             // if the rule does not exist, make sure that the expressionID is valid
-
+            
 
             // get all the elements needed to create a rule
             Rule newRule = new Rule
@@ -88,6 +88,8 @@ namespace BusinessRuleEngine.Controllers
                 NegativeAction = ruleDTO.NegativeAction,
                 NegativeValue = ruleDTO.NegativeValue
             };
+
+            sqlRepo.addRule(newRule);
 
             Debug.WriteLine("The values in body: "+newRule);
             //return CreatedAtAction()

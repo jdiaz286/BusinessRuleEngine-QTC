@@ -1,10 +1,15 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using BusinessRuleEngine.Entities;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Rule = BusinessRuleEngine.Entities.Rule;
 
+/* TODO
+ * - Possibly remove expressionExists()?
+ * - surround the connection in the constructor with a try catch
+ */
 namespace BusinessRuleEngine.Repositories
 {
     /*
@@ -12,6 +17,7 @@ namespace BusinessRuleEngine.Repositories
      */
     public class SQLRepository
     {
+        IConfiguration _configuration;
         // create an arraylist to save the rules
         List<Rule> rulesList = new List<Rule>();
         HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
@@ -20,7 +26,9 @@ namespace BusinessRuleEngine.Repositories
         List<Expression> expressionsList = new List<Expression>();
         HashSet<string> namesOfExpressions = new HashSet<string>(); // this is to easily retreive the name of a expression to see if a expression is in db
 
+        // the contstructor for this file is designed to retrieve data from rules and expressions tables
         public SQLRepository(IConfiguration _configuration, string tableName) {
+            this._configuration = _configuration;
 
             // create an instance of Response to return any possible errors
             Response response = new Response();
@@ -86,10 +94,40 @@ namespace BusinessRuleEngine.Repositories
                     
                 }
             }
-
+            conn.Close();
         }
 
-        // method to retrieve all info rules from the "rulesList" arraylist
+        /*
+         * The methods below are meant to add rules and Expressions to the database and datastructures above
+         */
+        public void addRule(Rule ruleToAdd)
+        {
+            try
+            {
+                // query that we want to execute in the db
+                string query = "INSERT INTO RuleTable (ruleID, ruleName, expressionID, positiveAction, positiveValue, negativeAction, negativeValue)";
+                query += " VALUES ('"+ ruleToAdd.RuleID +"', '"+ruleToAdd.RuleName+"', '"+ruleToAdd.ExpressionID+"', '"+ruleToAdd.PositiveAction+"', '"+ruleToAdd.PositiveValue+"', '"+ruleToAdd.NegativeAction+"', '"+ruleToAdd.NegativeValue+"')";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    Debug.WriteLine("rule added: "+ruleToAdd);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exception.
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        /*
+         * The methods below are meant to retreive data from the 
+         */
+        // method to retrieve all rules from the "rulesList" arraylist
         public List<Rule> getAllRules()
         {
             return rulesList;
@@ -99,6 +137,19 @@ namespace BusinessRuleEngine.Repositories
         public bool ruleExists(string ruleName)
         {   
             return namesOfRules.Contains(ruleName); // returns true if the rule exists, if not then false
+        }
+
+        // method to retreive all expressions from the "expressionsList" arraylist
+        public List<Expression> getAllExpressions()
+        {
+            return expressionsList;
+        }
+        
+        
+        // given a expression id, determine if it was fround from expressions table
+        public bool expressionExists(string expressionID)
+        {
+            return namesOfExpressions.Contains(expressionID);
         }
     }
 }

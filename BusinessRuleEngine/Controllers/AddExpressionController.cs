@@ -15,7 +15,7 @@ namespace BusinessRuleEngine.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/<AddExpressionController>/5
+        /*// GET api/<AddExpressionController>/5
         [HttpGet("{id}")]
         public string Get(int id)
         {
@@ -38,6 +38,6 @@ namespace BusinessRuleEngine.Controllers
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
-        }
+        }*/
     }
 }
