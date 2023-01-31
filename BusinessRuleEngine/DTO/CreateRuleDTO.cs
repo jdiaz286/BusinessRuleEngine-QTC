@@ -2,7 +2,7 @@
 
 /*
  * This class is meant to be used on the AddRule controller to retreive a new rule to add 
- * NOTE: Still needs to change the actions and values datatype
+ * TODO: Still needs to change the actions and values datatype
  */
 
 {
@@ -10,6 +10,7 @@
     {
         public string RuleName { get; init; }
 
+        // TODO: Possibly change from init to set because ExpressionID should already exist in rule table
         public string ExpressionID { get; init; }
 
         public string PositiveAction { get; init; }

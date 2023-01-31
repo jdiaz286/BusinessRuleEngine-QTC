@@ -1,16 +1,8 @@
-﻿using Microsoft.AspNetCore.DataProtection.Repositories;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using BusinessRuleEngine.Entities; // import the Rule class from the entities folder
 using BusinessRuleEngine.DTO;
-using System.Data.SqlClient;
-using System.Data;
 using Rule = BusinessRuleEngine.Entities.Rule;
-using Newtonsoft.Json;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Newtonsoft.Json.Linq;
-using System.Text.Json.Nodes;
 using BusinessRuleEngine.Repositories; // import the repositories folder from the project
-using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 
 
@@ -37,7 +29,7 @@ namespace BusinessRuleEngine.Controllers
         // returns a json formatted result of the rules saved on an sql database specified under "appsettings.json"
         // GET: /<GetAllRules>
         [HttpGet]
-        [Route("GetAllRules")]
+        [Route("GetAllRules")] // change this to change name on swaggerUI
         public IEnumerable<Rule> Get()
         {
             // create an instance of Response to return any possible errors
@@ -74,7 +66,7 @@ namespace BusinessRuleEngine.Controllers
                 Debug.WriteLine("The rule named " + nameOfNewRule + " already exists");
             }
 
-            // if the rule does not exist, make sure that the expressionID is valid
+            // TODO: if the rule does not exist, make sure that the expressionID is valid
             
 
             // get all the elements needed to create a rule
@@ -95,6 +87,7 @@ namespace BusinessRuleEngine.Controllers
             //return CreatedAtAction()
         }
 
+        // TODO: Add functionallity to remove rule from database
         
     }
 }

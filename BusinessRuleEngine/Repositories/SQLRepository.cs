@@ -2,14 +2,8 @@
 using System.Data.SqlClient;
 using System.Diagnostics;
 using BusinessRuleEngine.Entities;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Rule = BusinessRuleEngine.Entities.Rule;
 
-/* TODO
- * - Possibly remove expressionExists()?
- * - surround the connection in the constructor with a try catch
- */
 namespace BusinessRuleEngine.Repositories
 {
     /*
@@ -33,6 +27,7 @@ namespace BusinessRuleEngine.Repositories
             // create an instance of Response to return any possible errors
             Response response = new Response();
 
+            // TODO: surround the connection in the constructor with a try catch
             // establish connection to sql database
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString());
 
@@ -104,7 +99,7 @@ namespace BusinessRuleEngine.Repositories
         {
             try
             {
-                // query that we want to execute in the db
+                // query that we want to execute to insert into rule table
                 string query = "INSERT INTO RuleTable (ruleID, ruleName, expressionID, positiveAction, positiveValue, negativeAction, negativeValue)";
                 query += " VALUES ('"+ ruleToAdd.RuleID +"', '"+ruleToAdd.RuleName+"', '"+ruleToAdd.ExpressionID+"', '"+ruleToAdd.PositiveAction+"', '"+ruleToAdd.PositiveValue+"', '"+ruleToAdd.NegativeAction+"', '"+ruleToAdd.NegativeValue+"')";
 
@@ -114,12 +109,42 @@ namespace BusinessRuleEngine.Repositories
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
+                    rulesList.Add(ruleToAdd);
+                    namesOfRules.Add(ruleToAdd.RuleName);
+
                     Debug.WriteLine("rule added: "+ruleToAdd);
                 }
             }
             catch (Exception ex)
             {
                 // Handle any exception.
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        // method to add an expression to the database
+        public void addExpression(Expression expressionToAdd)
+        {
+            try
+            {
+                // query that we want to execute to insert into expression table
+                string query = "INSERT INTO ExpressionTable (expressionID, leftOperandType, leftOperandValue, rightOperandType, rightOperandValue, operator)";
+                query += " VALUES ('" + expressionToAdd.ExpressionID + "', '" + expressionToAdd.LeftOperandType + "', '" + expressionToAdd.LeftOperandValue + "', '" + expressionToAdd.RightOperandType + "', '" + expressionToAdd.RightOperandValue + "', '" + expressionToAdd.Operator + "')";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    expressionsList.Add(expressionToAdd);
+                    namesOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
+
+                    Debug.WriteLine("rule added: " + expressionToAdd);
+                }
+            }
+            catch(Exception ex)
+            {
                 Debug.WriteLine(ex.ToString());
             }
         }
@@ -144,8 +169,8 @@ namespace BusinessRuleEngine.Repositories
         {
             return expressionsList;
         }
-        
-        
+
+        // TODO Possibly remove expressionExists()?
         // given a expression id, determine if it was fround from expressions table
         public bool expressionExists(string expressionID)
         {

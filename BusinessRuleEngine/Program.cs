@@ -1,3 +1,4 @@
+// TODO: Figure out how to determine if a user can access rule engine
 using Microsoft.AspNetCore.Authentication.Negotiate;
 
 var builder = WebApplication.CreateBuilder(args);

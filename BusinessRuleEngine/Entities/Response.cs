@@ -1,5 +1,5 @@
 ﻿/*
- * This class is meant to indicate wheather a 
+ * This class is meant to indicate wheather an error was found
  */
 
 namespace BusinessRuleEngine.Entities

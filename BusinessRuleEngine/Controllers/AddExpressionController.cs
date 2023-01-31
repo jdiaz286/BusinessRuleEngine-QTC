@@ -1,43 +1,74 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using BusinessRuleEngine.DTO;
+using BusinessRuleEngine.Entities;
+using BusinessRuleEngine.Repositories;
+using System.Diagnostics;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
+// TODO: Add the same functionallity to the expression controller as rule controller
+
+// TODO: Create DTO's for Expression
 namespace BusinessRuleEngine.Controllers
 {
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
     [ApiController]
     public class AddExpressionController : ControllerBase
     {
-        // GET: api/<AddExpressionController>
+        // used to import the sql repository to read all the rules from
+        private readonly SQLRepository sqlRepo;
+
+        // used to read the info from appsettings.json
+        private readonly IConfiguration _configuration;
+
+        public AddExpressionController(IConfiguration configuration)
+        {
+            this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
+            this.sqlRepo = new SQLRepository(_configuration, "ExpressionTable"); // pass in data retrieved from server to instance of SQLRepository
+        }
+
+        // returns a json formatted result of the rules saved on an sql database specified under "appsettings.json"
+
+        // GET: /GetAllExpressions
         [HttpGet]
-        public IEnumerable<string> Get()
+        [Route("GetAllExpressions")]
+        public IEnumerable<Expression> Get()
         {
-            return new string[] { "value1", "value2" };
+            // create an instance of Response to return any possible errors
+            Response response = new Response();
+
+            // get the rules from the sql repository and save as a variable
+            var expressionsList = sqlRepo.getAllExpressions();
+
+            // Debug.WriteLine("size of the list: " +info.Count);
+            return expressionsList;
         }
 
-        /*// GET api/<AddExpressionController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+
+        // PUT /AddExpression
+        [HttpPut]
+        [Route("AddExpression")]
+        public void createExpression(CreateExpressionDTO expressionDTO)
         {
-            return "value";
+            // TODO: Verify that the expression doesn't already exist
+
+            // get all the elements needed to create an Expression
+            Expression newExpression = new Expression
+            {
+                ExpressionID = Guid.NewGuid().ToString(),
+                LeftOperandType = expressionDTO.LeftOperandType,
+                LeftOperandValue = expressionDTO.LeftOperandValue,
+                RightOperandType = expressionDTO.RightOperandType,
+                RightOperandValue = expressionDTO.RightOperandValue,
+                Operator = expressionDTO.Operator
+            };
+            
+
+            sqlRepo.addExpression(newExpression);
+
+            Debug.WriteLine("The values in body: " + newExpression);
+            //return CreatedAtAction()
         }
 
-        // POST api/<AddExpressionController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/<AddExpressionController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<AddExpressionController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }*/
     }
 }
