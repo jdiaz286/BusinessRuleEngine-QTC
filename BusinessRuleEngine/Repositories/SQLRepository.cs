@@ -15,10 +15,13 @@ namespace BusinessRuleEngine.Repositories
         // create an arraylist to save the rules
         List<Rule> rulesList = new List<Rule>();
         HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
+        Dictionary<string, Rule> idsWithRules = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule object>
+        Dictionary<string, string> namesWithRuleID = new Dictionary<string, string>();
 
         // create an arraylist to save the expressions
         List<Expression> expressionsList = new List<Expression>();
         HashSet<string> namesOfExpressions = new HashSet<string>(); // this is to easily retreive the name of a expression to see if a expression is in db
+        Dictionary<string, Expression> idsOfExpressions = new Dictionary<string, Expression>();
 
         // the contstructor for this file is designed to retrieve data from rules and expressions tables
         public SQLRepository(IConfiguration _configuration, string tableName) {
@@ -64,6 +67,9 @@ namespace BusinessRuleEngine.Repositories
 
                         // add the current rule name to the hashset
                         namesOfRules.Add(currentRule.RuleName);
+
+                        idsWithRules.Add(currentRule.RuleID, currentRule);
+                        namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
                     }
                     
                     else if (tableName.Equals("ExpressionTable"))
@@ -84,7 +90,8 @@ namespace BusinessRuleEngine.Repositories
 
                         // add the current expression id to the hashset
                         namesOfRules.Add(currentExpression.ExpressionID);
-                    
+
+                        idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
                     }
                     
                 }
@@ -163,6 +170,17 @@ namespace BusinessRuleEngine.Repositories
         {   
             return namesOfRules.Contains(ruleName); // returns true if the rule exists, if not then false
         }
+        
+        // given a rule id, return the Rule with all information
+        public Rule getRule(string ruleID)
+        {
+            return idsWithRules[ruleID];
+        }
+
+        public string getRuleID(string ruleName)
+        {
+            return namesWithRuleID["ruleName"]; 
+        }
 
         // method to retreive all expressions from the "expressionsList" arraylist
         public List<Expression> getAllExpressions()
@@ -175,6 +193,11 @@ namespace BusinessRuleEngine.Repositories
         public bool expressionExists(string expressionID)
         {
             return namesOfExpressions.Contains(expressionID);
+        }
+
+        public Expression getExpression(string expressionID)
+        {
+            return idsOfExpressions[expressionID];
         }
     }
 }

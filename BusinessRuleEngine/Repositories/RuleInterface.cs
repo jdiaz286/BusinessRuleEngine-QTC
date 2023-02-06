@@ -1,5 +1,5 @@
 ﻿using BusinessRuleEngine.Entities;
-
+// TODO: DELETE THIS FILE!!!
 namespace BusinessRuleEngine.Repositories
 {
     public interface RuleInterface
