@@ -6,9 +6,6 @@ using System.Diagnostics;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
-// TODO: Add the same functionallity to the expression controller as rule controller
-
-// TODO: Create DTO's for Expression
 namespace BusinessRuleEngine.Controllers
 {
     //[Route("api/[controller]")]

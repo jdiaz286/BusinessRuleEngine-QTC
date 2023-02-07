@@ -9,7 +9,6 @@ using Microsoft.Extensions.Configuration;
  * what will be displayed.
  */
 
-// TODO: Start to make the rule engine work
 namespace BusinessRuleEngine.Controllers
 {
     [Route("api/RuleEngine")]
@@ -75,6 +74,7 @@ namespace BusinessRuleEngine.Controllers
                 }
             }
 
+            // TODO: Make sure to return a json object here
             return "something went wrong";
         }
 

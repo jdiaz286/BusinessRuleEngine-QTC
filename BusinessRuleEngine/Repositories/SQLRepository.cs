@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using BusinessRuleEngine.DTO;
 using BusinessRuleEngine.Entities;
 using Rule = BusinessRuleEngine.Entities.Rule;
 
@@ -188,16 +189,21 @@ namespace BusinessRuleEngine.Repositories
             return expressionsList;
         }
 
-        // TODO Possibly remove expressionExists()?
-        // given a expression id, determine if it was fround from expressions table
-        public bool expressionExists(string expressionID)
+        // TODO fix expressionExists() to check if the expression contains all values as a given expression (except id)
+        public bool expressionExists(Expression passedInExpression)
         {
-            return namesOfExpressions.Contains(expressionID);
+            return false;
         }
 
         public Expression getExpression(string expressionID)
         {
             return idsOfExpressions[expressionID];
+        }
+
+        // TODO implement a way to get Expression id given all parameters except ID
+        public string getExpressionID(CreateExpressionDTO passedInValues)
+        {
+            return "";
         }
     }
 }
