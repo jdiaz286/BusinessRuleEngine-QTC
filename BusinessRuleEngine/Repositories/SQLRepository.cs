@@ -130,6 +130,30 @@ namespace BusinessRuleEngine.Repositories
             }
         }
 
+        public void deleteRule(RuleDTO ruleToDelete)
+        {
+            try
+            {
+                // query that we want to execute to insert into rule table
+                string query = "DELETE FROM RuleTable WHERE ruleID= '";
+                query += ruleToDelete.RuleID + "'";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    Debug.WriteLine("rule deleted: " + ruleToDelete);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exception.
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
         // method to add an expression to the database
         public void addExpression(Expression expressionToAdd)
         {
