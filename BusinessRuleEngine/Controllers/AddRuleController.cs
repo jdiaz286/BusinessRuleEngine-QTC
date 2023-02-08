@@ -88,6 +88,27 @@ namespace BusinessRuleEngine.Controllers
         }
 
         // TODO: Add functionallity to remove rule from database
-        
+        [HttpDelete]
+        [Route("DeleteRule")]
+        //TODO: Make it input json file either be only rule name or rule id
+        public void DeleteRule(RuleDTO ruleDTO)
+        {
+            // get the name of the rule that is going to be added
+            string nameOfNewRule = ruleDTO.RuleName;
+
+            //TODO: Needs to check if rule doesn't exist and handle accordingly
+            if (sqlRepo.ruleExists(nameOfNewRule))
+            {
+                Debug.WriteLine("The rule named " + nameOfNewRule + " already exists");
+            }
+
+            // TODO: if the rule does not exist, make sure that the expressionID is valid
+
+            sqlRepo.deleteRule(ruleDTO);
+
+            Debug.WriteLine("The values in body: " + nameOfNewRule);
+            //return CreatedAtAction()
+        }
+
     }
 }
