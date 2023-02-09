@@ -13,10 +13,11 @@ namespace BusinessRuleEngine.Repositories
     public class SQLRepository
     {
         IConfiguration _configuration;
+
         // create an arraylist to save the rules
         List<Rule> rulesList = new List<Rule>();
         HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
-        Dictionary<string, Rule> idsWithRules = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule object>
+        Dictionary<string, Rule> namesWithRules = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule object>
         Dictionary<string, string> namesWithRuleID = new Dictionary<string, string>();
 
         // create an arraylist to save the expressions
@@ -25,7 +26,8 @@ namespace BusinessRuleEngine.Repositories
         Dictionary<string, Expression> idsOfExpressions = new Dictionary<string, Expression>();
 
         // the contstructor for this file is designed to retrieve data from rules and expressions tables
-        public SQLRepository(IConfiguration _configuration, string tableName) {
+        public SQLRepository(IConfiguration _configuration, string tableName)
+        {
             this._configuration = _configuration;
 
             // create an instance of Response to return any possible errors
@@ -35,66 +37,77 @@ namespace BusinessRuleEngine.Repositories
             // establish connection to sql database
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString());
 
+            /*
+             * The lines below will retreive all info from the rules table
+             */
             // create a query to retreive all the rules from the database
-            string query = "Select * FROM "+tableName;
-            SqlDataAdapter data = new SqlDataAdapter(query, conn);
+            string ruleQuery = "Select * FROM RuleTable";
+            SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn);
 
             // create a data table and populate it with data above
-            DataTable dt = new DataTable();
-            data.Fill(dt);
+            DataTable ruleDT = new DataTable();
+            ruleData.Fill(ruleDT);
 
             // if we have at least 1 row of rules, retreive it and print 
-            if (dt.Rows.Count > 0)
+            if (ruleDT.Rows.Count > 0)
             {
                 // loop through all the rows in the data table
-                for (int i = 0; i < dt.Rows.Count; i++)
+                for (int i = 0; i < ruleDT.Rows.Count; i++)
                 {
-                    if (tableName.Equals("RuleTable"))
+                    // create a new rule and populate it
+                    Rule currentRule = new Rule
                     {
-                        // create a new rule and populate it
-                        Rule currentRule = new Rule
-                        {
-                            RuleID = Convert.ToString(dt.Rows[i]["ruleID"]),
-                            RuleName = Convert.ToString(dt.Rows[i]["ruleName"]),
-                            ExpressionID = Convert.ToString(dt.Rows[i]["expressionId"]),
-                            PositiveAction = Convert.ToString(dt.Rows[i]["positiveAction"]),
-                            PositiveValue = Convert.ToString(dt.Rows[i]["positiveValue"]),
-                            NegativeAction = Convert.ToString(dt.Rows[i]["negativeAction"]),
-                            NegativeValue = Convert.ToString(dt.Rows[i]["negativeValue"])
-                        };
+                        RuleID = Convert.ToString(ruleDT.Rows[i]["ruleID"]),
+                        RuleName = Convert.ToString(ruleDT.Rows[i]["ruleName"]),
+                        ExpressionID = Convert.ToString(ruleDT.Rows[i]["expressionId"]),
+                        PositiveAction = Convert.ToString(ruleDT.Rows[i]["positiveAction"]),
+                        PositiveValue = Convert.ToString(ruleDT.Rows[i]["positiveValue"]),
+                        NegativeAction = Convert.ToString(ruleDT.Rows[i]["negativeAction"]),
+                        NegativeValue = Convert.ToString(ruleDT.Rows[i]["negativeValue"])
+                    };
 
-                        // add the current rule to the arraylist
-                        rulesList.Add(currentRule);
+                    // add the current rule to the arraylist
+                    rulesList.Add(currentRule);
 
-                        // add the current rule name to the hashset
-                        namesOfRules.Add(currentRule.RuleName);
+                    // add the current rule name to the hashset
+                    namesOfRules.Add(currentRule.RuleName);
 
-                        idsWithRules.Add(currentRule.RuleID, currentRule);
-                        namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
-                    }
-                    
-                    else if (tableName.Equals("ExpressionTable"))
+                    namesWithRules.Add(currentRule.RuleName, currentRule);
+                    namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
+                }
+            }
+
+            // create a query to retreive all the expressions from the database
+            string expressionQuery = "Select * FROM ExpressionTable";
+            SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn);
+
+            // create a data table and populate it with data above
+            DataTable expressionDT = new DataTable();
+            expressionData.Fill(expressionDT);
+            // if we have at least 1 row of rules, retreive it and print 
+            if (expressionDT.Rows.Count > 0)
+            {
+                // loop through all the rows in the data table
+                for (int i = 0; i < expressionDT.Rows.Count; i++)
+                {
+                    // create a new expression and populate it
+                    Expression currentExpression = new Expression
                     {
-                        // create a new expression and populate it
-                        Expression currentExpression = new Expression
-                        {
-                            ExpressionID = Convert.ToString(dt.Rows[i]["expressionID"]),
-                            LeftOperandType = Convert.ToString(dt.Rows[i]["leftOperandType"]),
-                            LeftOperandValue = Convert.ToString(dt.Rows[i]["leftOperandValue"]),
-                            RightOperandType = Convert.ToString(dt.Rows[i]["rightOperandType"]),
-                            RightOperandValue = Convert.ToString(dt.Rows[i]["rightOperandValue"]),
-                            Operator = Convert.ToString(dt.Rows[i]["operator"])
-                        };
+                        ExpressionID = Convert.ToString(expressionDT.Rows[i]["expressionID"]),
+                        LeftOperandType = Convert.ToString(expressionDT.Rows[i]["leftOperandType"]),
+                        LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
+                        RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
+                        RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
+                        Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
+                    };
 
-                        // add the current rule to the arraylist
-                        expressionsList.Add(currentExpression);
+                    // add the current rule to the arraylist
+                    expressionsList.Add(currentExpression);
 
-                        // add the current expression id to the hashset
-                        namesOfRules.Add(currentExpression.ExpressionID);
+                    // add the current expression id to the hashset
+                    namesOfExpressions.Add(currentExpression.ExpressionID);
 
-                        idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
-                    }
-                    
+                    idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
                 }
             }
             conn.Close();
@@ -109,7 +122,7 @@ namespace BusinessRuleEngine.Repositories
             {
                 // query that we want to execute to insert into rule table
                 string query = "INSERT INTO RuleTable (ruleID, ruleName, expressionID, positiveAction, positiveValue, negativeAction, negativeValue)";
-                query += " VALUES ('"+ ruleToAdd.RuleID +"', '"+ruleToAdd.RuleName+"', '"+ruleToAdd.ExpressionID+"', '"+ruleToAdd.PositiveAction+"', '"+ruleToAdd.PositiveValue+"', '"+ruleToAdd.NegativeAction+"', '"+ruleToAdd.NegativeValue+"')";
+                query += " VALUES ('" + ruleToAdd.RuleID + "', '" + ruleToAdd.RuleName + "', '" + ruleToAdd.ExpressionID + "', '" + ruleToAdd.PositiveAction + "', '" + ruleToAdd.PositiveValue + "', '" + ruleToAdd.NegativeAction + "', '" + ruleToAdd.NegativeValue + "')";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
@@ -120,7 +133,7 @@ namespace BusinessRuleEngine.Repositories
                     rulesList.Add(ruleToAdd);
                     namesOfRules.Add(ruleToAdd.RuleName);
 
-                    Debug.WriteLine("rule added: "+ruleToAdd);
+                    Debug.WriteLine("rule added: " + ruleToAdd);
                 }
             }
             catch (Exception ex)
@@ -172,10 +185,10 @@ namespace BusinessRuleEngine.Repositories
                     expressionsList.Add(expressionToAdd);
                     namesOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
 
-                    Debug.WriteLine("rule added: " + expressionToAdd);
+                    Debug.WriteLine("Expression added: " + expressionToAdd);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine(ex.ToString());
             }
@@ -189,22 +202,22 @@ namespace BusinessRuleEngine.Repositories
         {
             return rulesList;
         }
-       
+
         // given a rule name, determine if it was found in the rules table
         public bool ruleExists(string ruleName)
-        {   
+        {
             return namesOfRules.Contains(ruleName); // returns true if the rule exists, if not then false
         }
-        
-        // given a rule id, return the Rule with all information
-        public Rule getRule(string ruleID)
+
+        // given a rule namee, return the Rule with all information
+        public Rule getRule(string ruleName)
         {
-            return idsWithRules[ruleID];
+            return namesWithRules[ruleName];
         }
 
         public string getRuleID(string ruleName)
         {
-            return namesWithRuleID["ruleName"]; 
+            return namesWithRuleID["ruleName"];
         }
 
         // method to retreive all expressions from the "expressionsList" arraylist
@@ -213,21 +226,16 @@ namespace BusinessRuleEngine.Repositories
             return expressionsList;
         }
 
-        // TODO fix expressionExists() to check if the expression contains all values as a given expression (except id)
-        public bool expressionExists(Expression passedInExpression)
+        // TODO Possibly remove expressionExists()?
+        // given a expression id, determine if it was fround from expressions table
+        public bool expressionExists(string expressionID)
         {
-            return false;
+            return namesOfExpressions.Contains(expressionID);
         }
 
         public Expression getExpression(string expressionID)
         {
             return idsOfExpressions[expressionID];
-        }
-
-        // TODO implement a way to get Expression id given all parameters except ID
-        public string getExpressionID(CreateExpressionDTO passedInValues)
-        {
-            return "";
         }
     }
 }
