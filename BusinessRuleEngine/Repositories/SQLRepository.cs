@@ -143,13 +143,13 @@ namespace BusinessRuleEngine.Repositories
             }
         }
 
-        public void deleteRule(RuleDTO ruleToDelete)
+        public void deleteRule(string ruleToDelete)
         {
             try
             {
                 // query that we want to execute to insert into rule table
                 string query = "DELETE FROM RuleTable WHERE ruleID= '";
-                query += ruleToDelete.RuleID + "'";
+                query += ruleToDelete + "'";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
