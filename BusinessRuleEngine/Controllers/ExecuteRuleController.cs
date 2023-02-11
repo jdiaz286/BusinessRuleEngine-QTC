@@ -90,6 +90,7 @@ namespace BusinessRuleEngine.Controllers
         // method to evaluate the expression and return either positive (true) or negative (false)
         private bool evaluateExpression(Expression expression, JsonArray userParameters)
         {
+            Debug.WriteLine("Entered Evaluate Expression");
             // create a boolean variable to track the amount of time 
             bool expressionEvaluation = false;
 
@@ -101,17 +102,18 @@ namespace BusinessRuleEngine.Controllers
             var rightOperandValue = expression.RightOperandValue;
 
             // check to make sure both operand types are the same, if so then determine which method should be used to evaluate
-            if (leftOperandType.ToLower().Equals(rightOperandType.ToLower()))
+            if (leftOperandType.ToLower().Split("-").Last().Equals(rightOperandType.Split("-").Last().ToLower()))
             {
+                Debug.WriteLine("Entered if statement containing Switch Statement");
                 // TODO: take into account more objects besides strings and integers
-                switch (leftOperandType.ToLower())
+                switch (leftOperandType.Split("-").Last().ToLower())
                 {
-                    case "string":
-                        Console.WriteLine("Evaluating string expression.");
+                    case "gender":
+                        Debug.WriteLine("Evaluating " + leftOperandType.Split("-").Last().ToLower() + " expression.");
                         expressionEvaluation = evaluateString(leftOperandValue, rightOperandValue, expression.Operator, userParameters);
                         break;
-                    case "integer":
-                        Console.WriteLine("Evaluating integer expression.");
+                    case "age":
+                        Debug.WriteLine("Evaluating " + leftOperandType.Split("-").Last().ToLower() + " expression.");
                         expressionEvaluation = evaluateInteger(leftOperandValue, rightOperandValue, expression.Operator, userParameters);
                         break;
                     default:
@@ -134,14 +136,17 @@ namespace BusinessRuleEngine.Controllers
 
             // TODO: Take into account more scenarios besides just "="
             // if there is an equals sign in front of the operator, then determine if the strings equal each other
-            if (expressionOperator[0].Equals("="))
+            if (expressionOperator.Equals("="))
             {
                 // save the rest of the operator that isn't a "="
-                string targetValue = expressionOperator.Substring(0);
+                string targetValue = rightOperandVal;
+                Debug.WriteLine("Target value: " + targetValue);
+                Debug.WriteLine("Userparmeters: " + userParameters[0]["gender"].ToString());
 
                 // if the string version of userParameters contains the target value, return true to execute positive rule
-                if (userParameters.ToString().Contains(targetValue))
+                if (userParameters[0]["gender"].ToString().Contains(targetValue.ToLower()))
                 {
+                    Debug.WriteLine("Returns True");
                     return true;
                 }
             }
