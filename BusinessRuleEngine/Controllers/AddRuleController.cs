@@ -103,8 +103,7 @@ namespace BusinessRuleEngine.Controllers
             }
 
             // TODO: if the rule does not exist, make sure that the expressionID is valid
-
-            sqlRepo.deleteRule(ruleDTO);
+            sqlRepo.deleteRule("someString");
 
             Debug.WriteLine("The values in body: " + nameOfNewRule);
             //return CreatedAtAction()
