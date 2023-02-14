@@ -67,5 +67,47 @@ namespace BusinessRuleEngine.Controllers
             //return CreatedAtAction()
         }
 
+        [HttpPut]
+        [Route("EditExpression")]
+        public void EditRule(EditExpressionDTO expressionDTO)
+        {
+            // get the name of the rule that is going to be added
+            string expressionIDofExpressionToEdit = expressionDTO.ExpressionID;
+
+            //TODO: Needs to check if rule doesn't exist and handle accordingly
+            if (sqlRepo.expressionExists(expressionIDofExpressionToEdit))
+            {
+                Debug.WriteLine("The expression id " + expressionIDofExpressionToEdit + " already exists");
+            }
+
+            // TODO: if the rule does not exist, make sure that the expressionID is valid
+            sqlRepo.editExpression(expressionDTO);
+
+            Debug.WriteLine("The values in body: " + expressionIDofExpressionToEdit);
+            //return CreatedAtAction()
+        }
+
+        [HttpDelete]
+        [Route("DeleteExpression")]
+        public void deleteExpression(DeleteExpressionDTO expressionDTO)
+        {
+            // TODO: Verify that the expression doesn't already exist
+
+            // get all the elements needed to create an Expression
+
+            string expressionToDeleteID = expressionDTO.expressionID;
+
+            if (!sqlRepo.ruleExists(expressionToDeleteID))
+            {
+                Debug.WriteLine("The rule named " + expressionToDeleteID + " doesn't exists");
+            }
+
+            sqlRepo.deleteExpression(expressionToDeleteID);
+
+
+
+            Debug.WriteLine("The values in body: " + expressionToDeleteID);
+            //return CreatedAtAction()
+        }
     }
 }
