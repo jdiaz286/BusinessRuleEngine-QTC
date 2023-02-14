@@ -143,13 +143,40 @@ namespace BusinessRuleEngine.Repositories
             }
         }
 
+        public void editRule(EditRuleDTO ruleToEdit)
+        {
+            try
+            {
+                // query that we want to execute to insert into rule table
+                string query = "UPDATE dbo.RuleTable ";
+                query += "SET ruleName='" + ruleToEdit.RuleName +"', expressionID='" + ruleToEdit.ExpressionID +"', " +
+                    "positiveAction='" + ruleToEdit.PositiveAction + "', positiveValue='" + ruleToEdit.PositiveValue + "', " +
+                    "negativeAction='" + ruleToEdit.NegativeAction + "', negativeValue='" + ruleToEdit.NegativeValue + "' WHERE " +
+                    "ruleID='" + ruleToEdit.RuleID + "';";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    Debug.WriteLine("rule deleted: " + ruleToEdit);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exception.
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
         public void deleteRule(string ruleToDelete)
         {
             try
             {
                 // query that we want to execute to insert into rule table
-                string query = "DELETE FROM RuleTable WHERE ruleID= '";
-                query += ruleToDelete + "'";
+                string query = "DELETE FROM dbo.RuleTable WHERE ruleID= '";
+                query += ruleToDelete + "';";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
@@ -186,6 +213,55 @@ namespace BusinessRuleEngine.Repositories
                     namesOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
 
                     Debug.WriteLine("Expression added: " + expressionToAdd);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        public void editExpression(EditExpressionDTO expressionToEdit)
+        {
+            try
+            {
+                // query that we want to execute to insert into rule table
+                string query = "UPDATE dbo.ExpressionTable SET ";
+                query += "leftOperandType='" + expressionToEdit.LeftOperandType + "', leftOperandValue='" + expressionToEdit.LeftOperandValue + "', " +
+                    "rightOperandType='" + expressionToEdit.RightOperandType + "', rightOperandValue='" + expressionToEdit.RightOperandValue + "', operator='" + expressionToEdit.Operator + "' WHERE " +
+                    "expressionID='" + expressionToEdit.ExpressionID + "';";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    Debug.WriteLine("expression deleted: " + expressionToEdit);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exception.
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+
+        public void deleteExpression(string expressionToDelete)
+        {
+            try
+            {
+                // query that we want to execute to insert into expression table
+                string query = "DELETE FROM dbo.ExpressionTable WHERE expressionID= '";
+                query += expressionToDelete + "';";
+
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (var command = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
+
+                    Debug.WriteLine("expression deleted: " + expressionToDelete);
                 }
             }
             catch (Exception ex)
