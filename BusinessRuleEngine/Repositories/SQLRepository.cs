@@ -31,86 +31,94 @@ namespace BusinessRuleEngine.Repositories
             this._configuration = _configuration;
 
             // create an instance of Response to return any possible errors
-            Response response = new Response();
+            //Response response = new Response();
 
-            // TODO: surround the connection in the constructor with a try catch
-            // establish connection to sql database
-            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString());
-
-            /*
-             * The lines below will retreive all info from the rules table
-             */
-            // create a query to retreive all the rules from the database
-            string ruleQuery = "Select * FROM RuleTable";
-            SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn);
-
-            // create a data table and populate it with data above
-            DataTable ruleDT = new DataTable();
-            ruleData.Fill(ruleDT);
-
-            // if we have at least 1 row of rules, retreive it and print 
-            if (ruleDT.Rows.Count > 0)
+            try
             {
-                // loop through all the rows in the data table
-                for (int i = 0; i < ruleDT.Rows.Count; i++)
+                // create a query to retreive all the rules from the database
+                string ruleQuery = "Select * FROM RuleTable";
+
+                // create a query to retreive all the expressions from the database
+                string expressionQuery = "Select * FROM ExpressionTable";
+
+                // get data for the rule table
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn))
                 {
-                    // create a new rule and populate it
-                    Rule currentRule = new Rule
+                    // create a data table and populate it with data above
+                    DataTable ruleDT = new DataTable();
+                    ruleData.Fill(ruleDT);
+
+                    // if we have at least 1 row of rules, retreive it and print 
+                    if (ruleDT.Rows.Count > 0)
                     {
-                        RuleID = Convert.ToString(ruleDT.Rows[i]["ruleID"]),
-                        RuleName = Convert.ToString(ruleDT.Rows[i]["ruleName"]),
-                        ExpressionID = Convert.ToString(ruleDT.Rows[i]["expressionId"]),
-                        PositiveAction = Convert.ToString(ruleDT.Rows[i]["positiveAction"]),
-                        PositiveValue = Convert.ToString(ruleDT.Rows[i]["positiveValue"]),
-                        NegativeAction = Convert.ToString(ruleDT.Rows[i]["negativeAction"]),
-                        NegativeValue = Convert.ToString(ruleDT.Rows[i]["negativeValue"])
-                    };
+                        // loop through all the rows in the data table
+                        for (int i = 0; i < ruleDT.Rows.Count; i++)
+                        {
+                            // create a new rule and populate it
+                            Rule currentRule = new Rule
+                            {
+                                RuleID = Convert.ToString(ruleDT.Rows[i]["ruleID"]),
+                                RuleName = Convert.ToString(ruleDT.Rows[i]["ruleName"]),
+                                ExpressionID = Convert.ToString(ruleDT.Rows[i]["expressionId"]),
+                                PositiveAction = Convert.ToString(ruleDT.Rows[i]["positiveAction"]),
+                                PositiveValue = Convert.ToString(ruleDT.Rows[i]["positiveValue"]),
+                                NegativeAction = Convert.ToString(ruleDT.Rows[i]["negativeAction"]),
+                                NegativeValue = Convert.ToString(ruleDT.Rows[i]["negativeValue"])
+                            };
 
-                    // add the current rule to the arraylist
-                    rulesList.Add(currentRule);
+                            // add the current rule to the arraylist
+                            rulesList.Add(currentRule);
 
-                    // add the current rule name to the hashset
-                    namesOfRules.Add(currentRule.RuleName);
+                            // add the current rule name to the hashset
+                            namesOfRules.Add(currentRule.RuleName);
 
-                    namesWithRules.Add(currentRule.RuleName, currentRule);
-                    namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
+                            namesWithRules.Add(currentRule.RuleName, currentRule);
+                            namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
+                        }
+                    }
+                }
+
+                // get data for the expression table
+                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+                using (SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn))
+                {
+                    // create a data table and populate it with data above
+                    DataTable expressionDT = new DataTable();
+                    expressionData.Fill(expressionDT);
+                    // if we have at least 1 row of rules, retreive it and print 
+                    if (expressionDT.Rows.Count > 0)
+                    {
+                        // loop through all the rows in the data table
+                        for (int i = 0; i < expressionDT.Rows.Count; i++)
+                        {
+                            // create a new expression and populate it
+                            Expression currentExpression = new Expression
+                            {
+                                ExpressionID = Convert.ToString(expressionDT.Rows[i]["expressionID"]),
+                                LeftOperandType = Convert.ToString(expressionDT.Rows[i]["leftOperandType"]),
+                                LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
+                                RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
+                                RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
+                                Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
+                            };
+
+                            // add the current rule to the arraylist
+                            expressionsList.Add(currentExpression);
+
+                            // add the current expression id to the hashset
+                            namesOfExpressions.Add(currentExpression.ExpressionID);
+
+                            idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
+                        }
+                    }
                 }
             }
-
-            // create a query to retreive all the expressions from the database
-            string expressionQuery = "Select * FROM ExpressionTable";
-            SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn);
-
-            // create a data table and populate it with data above
-            DataTable expressionDT = new DataTable();
-            expressionData.Fill(expressionDT);
-            // if we have at least 1 row of rules, retreive it and print 
-            if (expressionDT.Rows.Count > 0)
+            catch (Exception ex)
             {
-                // loop through all the rows in the data table
-                for (int i = 0; i < expressionDT.Rows.Count; i++)
-                {
-                    // create a new expression and populate it
-                    Expression currentExpression = new Expression
-                    {
-                        ExpressionID = Convert.ToString(expressionDT.Rows[i]["expressionID"]),
-                        LeftOperandType = Convert.ToString(expressionDT.Rows[i]["leftOperandType"]),
-                        LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
-                        RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
-                        RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
-                        Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
-                    };
-
-                    // add the current rule to the arraylist
-                    expressionsList.Add(currentExpression);
-
-                    // add the current expression id to the hashset
-                    namesOfExpressions.Add(currentExpression.ExpressionID);
-
-                    idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
-                }
+                Debug.WriteLine(ex.ToString());
             }
-            conn.Close();
+
         }
 
         /*
@@ -122,11 +130,29 @@ namespace BusinessRuleEngine.Repositories
             {
                 // query that we want to execute to insert into rule table
                 string query = "INSERT INTO RuleTable (ruleID, ruleName, expressionID, positiveAction, positiveValue, negativeAction, negativeValue)";
-                query += " VALUES ('" + ruleToAdd.RuleID + "', '" + ruleToAdd.RuleName + "', '" + ruleToAdd.ExpressionID + "', '" + ruleToAdd.PositiveAction + "', '" + ruleToAdd.PositiveValue + "', '" + ruleToAdd.NegativeAction + "', '" + ruleToAdd.NegativeValue + "')";
+                //query += " VALUES (, + ruleToAdd.ExpressionID + "', '" + ruleToAdd.PositiveAction + "', '" + ruleToAdd.PositiveValue + "', '" + ruleToAdd.NegativeAction + "', '" + ruleToAdd.NegativeValue + "')";
+                query += "VALUES (@rID, @rName, @eID, @posAct, @posVal, @negAct, @negVal)";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[7];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@rID", ruleToAdd.RuleID);
+                    sqlParams[1] = new SqlParameter("@rName", ruleToAdd.RuleName);
+                    sqlParams[2] = new SqlParameter("@eID", ruleToAdd.ExpressionID);
+                    sqlParams[3] = new SqlParameter("@posAct", ruleToAdd.PositiveAction);
+                    sqlParams[4] = new SqlParameter("@posVal", ruleToAdd.PositiveValue);
+                    sqlParams[5] = new SqlParameter("@negAct", ruleToAdd.NegativeAction);
+                    sqlParams[6] = new SqlParameter("negVal", ruleToAdd.NegativeValue);
+
+                    // add all 7 sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
+
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
@@ -149,11 +175,22 @@ namespace BusinessRuleEngine.Repositories
             {
                 // query that we want to execute to insert into rule table
                 string query = "DELETE FROM RuleTable WHERE ruleID= '";
-                query += ruleToDelete + "'";
+                //query += ruleToDelete + "'";
+                query += " VALUES (@rName)";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[1];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@rName", ruleToDelete);
+
+                    // add all sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
@@ -174,11 +211,28 @@ namespace BusinessRuleEngine.Repositories
             {
                 // query that we want to execute to insert into expression table
                 string query = "INSERT INTO ExpressionTable (expressionID, leftOperandType, leftOperandValue, rightOperandType, rightOperandValue, operator)";
-                query += " VALUES ('" + expressionToAdd.ExpressionID + "', '" + expressionToAdd.LeftOperandType + "', '" + expressionToAdd.LeftOperandValue + "', '" + expressionToAdd.RightOperandType + "', '" + expressionToAdd.RightOperandValue + "', '" + expressionToAdd.Operator + "')";
+                //query += " VALUES ('" + expressionToAdd.ExpressionID + "', '" + expressionToAdd.LeftOperandType + "', '" + expressionToAdd.LeftOperandValue + "', '" + expressionToAdd.RightOperandType + "', '" + expressionToAdd.RightOperandValue + "', '" + expressionToAdd.Operator + "')";
+                query += " VALUES (@eID, @lot, @lov, @rot, @rov, @op)";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[6];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@eID", expressionToAdd.ExpressionID);
+                    sqlParams[1] = new SqlParameter("@lot", expressionToAdd.LeftOperandType);
+                    sqlParams[2] = new SqlParameter("@lov", expressionToAdd.LeftOperandValue);
+                    sqlParams[3] = new SqlParameter("@rot", expressionToAdd.RightOperandType);
+                    sqlParams[4] = new SqlParameter("@rov", expressionToAdd.RightOperandValue);
+                    sqlParams[5] = new SqlParameter("@op", expressionToAdd.Operator);
+
+                    // add all 6 sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
+
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
