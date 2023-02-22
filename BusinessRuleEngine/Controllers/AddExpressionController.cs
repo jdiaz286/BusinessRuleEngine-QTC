@@ -3,6 +3,8 @@ using BusinessRuleEngine.DTO;
 using BusinessRuleEngine.Entities;
 using BusinessRuleEngine.Repositories;
 using System.Diagnostics;
+using System.Drawing.Printing;
+using System.Text.Json.Nodes;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -67,5 +69,16 @@ namespace BusinessRuleEngine.Controllers
             //return CreatedAtAction()
         }
 
+        /*
+        [HttpPut]
+        [Route("TestPut")]
+        public JsonObject testPut(string something)
+        {
+            JsonObject result = new JsonObject();
+            Debug.WriteLine("added something somewhere");
+            result.Add("Message", "Value has been added");
+            return result;
+        }
+        */
     }
 }
