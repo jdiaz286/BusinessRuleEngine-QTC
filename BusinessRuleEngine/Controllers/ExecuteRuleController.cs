@@ -26,7 +26,7 @@ namespace BusinessRuleEngine.Controllers
         public ExecuteRuleController(IConfiguration configuration)
         {
             this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
-            this.sqlRepo = new SQLRepository(_configuration, "RuleTable"); // pass in data retrieved from server to instance of SQLRepository
+            this.sqlRepo = new SQLRepository(_configuration); // pass in data retrieved from server to instance of SQLRepository
         }
 
         // GET: api/<RuleEngine>
@@ -90,7 +90,7 @@ namespace BusinessRuleEngine.Controllers
 
             // create an instance of Expression Evaluator and pass in json node vals and expression to evaluate
             // for more info on Expression, check under Model Folder, ExpressionEvaluator.cs
-            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters);
+            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters,result);
 
             // evaluate the expression of the given instance and return a boolean value
             bool expressionEvaluation = exEval.evaluateExpression();

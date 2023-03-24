@@ -26,104 +26,98 @@ namespace BusinessRuleEngine.Repositories
         Dictionary<string, Expression> idsOfExpressions = new Dictionary<string, Expression>();
 
         // the contstructor for this file is designed to retrieve data from rules and expressions tables
-        public SQLRepository(IConfiguration _configuration, string tableName)
+        public SQLRepository(IConfiguration _configuration)
         {
             this._configuration = _configuration;
 
             // create an instance of Response to return any possible errors
-            //Response response = new Response();
+            Response response = new Response();
 
-            try
+            // TODO: surround the connection in the constructor with a try catch
+            // establish connection to sql database
+            SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString());
+
+            /*
+             * The lines below will retreive all info from the rules table
+             */
+            // create a query to retreive all the rules from the database
+            string ruleQuery = "Select * FROM RuleTable";
+            SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn);
+
+            // create a data table and populate it with data above
+            DataTable ruleDT = new DataTable();
+            ruleData.Fill(ruleDT);
+
+            // if we have at least 1 row of rules, retreive it and print 
+            if (ruleDT.Rows.Count > 0)
             {
-                // create a query to retreive all the rules from the database
-                string ruleQuery = "Select * FROM RuleTable";
-
-                // create a query to retreive all the expressions from the database
-                string expressionQuery = "Select * FROM ExpressionTable";
-
-                // get data for the rule table
-                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
-                using (SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn))
+                // loop through all the rows in the data table
+                for (int i = 0; i < ruleDT.Rows.Count; i++)
                 {
-                    // create a data table and populate it with data above
-                    DataTable ruleDT = new DataTable();
-                    ruleData.Fill(ruleDT);
-
-                    // if we have at least 1 row of rules, retreive it and print 
-                    if (ruleDT.Rows.Count > 0)
+                    // create a new rule and populate it
+                    Rule currentRule = new Rule
                     {
-                        // loop through all the rows in the data table
-                        for (int i = 0; i < ruleDT.Rows.Count; i++)
-                        {
-                            // create a new rule and populate it
-                            Rule currentRule = new Rule
-                            {
-                                RuleID = Convert.ToString(ruleDT.Rows[i]["ruleID"]),
-                                RuleName = Convert.ToString(ruleDT.Rows[i]["ruleName"]),
-                                ExpressionID = Convert.ToString(ruleDT.Rows[i]["expressionId"]),
-                                PositiveAction = Convert.ToString(ruleDT.Rows[i]["positiveAction"]),
-                                PositiveValue = Convert.ToString(ruleDT.Rows[i]["positiveValue"]),
-                                NegativeAction = Convert.ToString(ruleDT.Rows[i]["negativeAction"]),
-                                NegativeValue = Convert.ToString(ruleDT.Rows[i]["negativeValue"])
-                            };
+                        RuleID = Convert.ToString(ruleDT.Rows[i]["ruleID"]),
+                        RuleName = Convert.ToString(ruleDT.Rows[i]["ruleName"]),
+                        ExpressionID = Convert.ToString(ruleDT.Rows[i]["expressionId"]),
+                        PositiveAction = Convert.ToString(ruleDT.Rows[i]["positiveAction"]),
+                        PositiveValue = Convert.ToString(ruleDT.Rows[i]["positiveValue"]),
+                        NegativeAction = Convert.ToString(ruleDT.Rows[i]["negativeAction"]),
+                        NegativeValue = Convert.ToString(ruleDT.Rows[i]["negativeValue"])
+                    };
 
-                            // add the current rule to the arraylist
-                            rulesList.Add(currentRule);
+                    // add the current rule to the arraylist
+                    rulesList.Add(currentRule);
 
-                            // add the current rule name to the hashset
-                            namesOfRules.Add(currentRule.RuleName);
+                    // add the current rule name to the hashset
+                    namesOfRules.Add(currentRule.RuleName);
 
-                            namesWithRules.Add(currentRule.RuleName, currentRule);
-                            namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
-                        }
-                    }
-                }
-
-                // get data for the expression table
-                using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
-                using (SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn))
-                {
-                    // create a data table and populate it with data above
-                    DataTable expressionDT = new DataTable();
-                    expressionData.Fill(expressionDT);
-                    // if we have at least 1 row of rules, retreive it and print 
-                    if (expressionDT.Rows.Count > 0)
-                    {
-                        // loop through all the rows in the data table
-                        for (int i = 0; i < expressionDT.Rows.Count; i++)
-                        {
-                            // create a new expression and populate it
-                            Expression currentExpression = new Expression
-                            {
-                                ExpressionID = Convert.ToString(expressionDT.Rows[i]["expressionID"]),
-                                LeftOperandType = Convert.ToString(expressionDT.Rows[i]["leftOperandType"]),
-                                LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
-                                RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
-                                RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
-                                Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
-                            };
-
-                            // add the current rule to the arraylist
-                            expressionsList.Add(currentExpression);
-
-                            // add the current expression id to the hashset
-                            namesOfExpressions.Add(currentExpression.ExpressionID);
-
-                            idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
-                        }
-                    }
+                    namesWithRules.Add(currentRule.RuleName, currentRule);
+                    namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
 
+            // create a query to retreive all the expressions from the database
+            string expressionQuery = "Select * FROM ExpressionTable";
+            SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn);
+
+            // create a data table and populate it with data above
+            DataTable expressionDT = new DataTable();
+            expressionData.Fill(expressionDT);
+            // if we have at least 1 row of rules, retreive it and print 
+            if (expressionDT.Rows.Count > 0)
+            {
+                // loop through all the rows in the data table
+                for (int i = 0; i < expressionDT.Rows.Count; i++)
+                {
+                    // create a new expression and populate it
+                    Expression currentExpression = new Expression
+                    {
+                        ExpressionID = Convert.ToString(expressionDT.Rows[i]["expressionID"]),
+                        LeftOperandType = Convert.ToString(expressionDT.Rows[i]["leftOperandType"]),
+                        LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
+                        RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
+                        RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
+                        Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
+                    };
+
+                    // add the current rule to the arraylist
+                    expressionsList.Add(currentExpression);
+
+                    // add the current expression id to the hashset
+                    namesOfExpressions.Add(currentExpression.ExpressionID);
+
+                    idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
+                }
+            }
+            conn.Close();
         }
 
+
         /*
-         * The methods below are meant to add rules and Expressions to the database and datastructures above
+         * The methods below are meant to manipulate Rules 
          */
+        #region AddRule
         public void addRule(Rule ruleToAdd)
         {
             try
@@ -168,7 +162,9 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+        #endregion
 
+        #region EditRule
         public void editRule(EditRuleDTO ruleToEdit)
         {
             try
@@ -195,7 +191,9 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+        #endregion
 
+        #region DeleteRule
         public void deleteRule(string ruleToDelete)
         {
             try
@@ -230,7 +228,12 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+        #endregion
 
+        /*
+         * The methods below are meant to manipulate Expressions 
+         */
+        #region AddExpression
         // method to add an expression to the database
         public void addExpression(Expression expressionToAdd)
         {
@@ -274,7 +277,9 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+        #endregion
 
+        #region EditExpression
         public void editExpression(EditExpressionDTO expressionToEdit)
         {
             try
@@ -300,7 +305,9 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+        #endregion
 
+        #region DeleteExpression
         public void deleteExpression(string expressionToDelete)
         {
             try
@@ -323,6 +330,7 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
+#endregion
 
         /*
          * The methods below are meant to retreive data from the 

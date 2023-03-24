@@ -4,9 +4,7 @@ using BusinessRuleEngine.DTO;
 using Rule = BusinessRuleEngine.Entities.Rule;
 using BusinessRuleEngine.Repositories; // import the repositories folder from the project
 using System.Diagnostics;
-
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using System.Text.Json.Nodes;
 
 namespace BusinessRuleEngine.Controllers
 {
@@ -14,43 +12,50 @@ namespace BusinessRuleEngine.Controllers
     [ApiController]
     public class AddRuleController : ControllerBase
     {
+        #region variables
         // used to import the sql repository to read all the rules from
         private readonly SQLRepository sqlRepo;
 
         // used to read the info from appsettings.json
         private readonly IConfiguration _configuration;
+        #endregion
 
+        #region Constructor
         public AddRuleController(IConfiguration configuration)
         {
             this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
-            this.sqlRepo = new SQLRepository(_configuration, "RuleTable"); // pass in data retrieved from server to instance of SQLRepository
+            this.sqlRepo = new SQLRepository(_configuration); // pass in data retrieved from server to instance of SQLRepository
         }
+        #endregion
 
+        #region GetAllRules
         // returns a json formatted result of the rules saved on an sql database specified under "appsettings.json"
         // GET: /<GetAllRules>
         [HttpGet]
         [Route("GetAllRules")] // change this to change name on swaggerUI
         public IEnumerable<Rule> Get()
         {
-            // create an instance of Response to return any possible errors
-            Response response = new Response();
+            // instantiate the JsonObject that will be returned to the user
+            JsonObject message = new JsonObject();
 
             // get the rules from the sql repository and save as a variable
             var rulesList = sqlRepo.getAllRules();
 
-            // if the arraylist has at least 1 item, then return it as a json object
-            /*if (rulesList.Count > 0)
+            // if the arraylist has at least 1 item, then return it as a json object letting the user know
+            if (rulesList.Count == 0)
             {
-                Console.WriteLine(JsonConvert.SerializeObject(rulesList).GetType());
-                return rulesList;
-            }*/
+                message.Add("Message", "No Rules found in database");
+                //return message;
+            }
 
             // Debug.WriteLine("size of the list: " +info.Count);
             return rulesList;
             
         }
+        #endregion
 
 
+        #region AddRule
         // PUT /AddRule
         // add a rule based on what the user has sent (ruleID and expressionID are generated randomly)
         [HttpPut]
@@ -86,7 +91,9 @@ namespace BusinessRuleEngine.Controllers
             Debug.WriteLine("The values in body: "+newRule);
             //return CreatedAtAction()
         }
+        #endregion
 
+        #region EditRule
         [HttpPut]
         [Route("EditRule")]
         public void EditRule(EditRuleDTO ruleDTO)
@@ -106,7 +113,9 @@ namespace BusinessRuleEngine.Controllers
             Debug.WriteLine("The values in body: " + ruleIDofRuleToEdit);
             //return CreatedAtAction()
         }
+        #endregion
 
+        #region DeleteRule
         // TODO: Add functionallity to remove rule from database
         [HttpDelete]
         [Route("DeleteRule")]
@@ -128,6 +137,7 @@ namespace BusinessRuleEngine.Controllers
             Debug.WriteLine("The values in body: " + nameOfNewRule);
             //return CreatedAtAction()
         }
+        #endregion
 
     }
 }

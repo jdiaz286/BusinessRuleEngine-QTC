@@ -21,7 +21,7 @@ namespace BusinessRuleEngine.Controllers
         public AddExpressionController(IConfiguration configuration)
         {
             this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
-            this.sqlRepo = new SQLRepository(_configuration, "ExpressionTable"); // pass in data retrieved from server to instance of SQLRepository
+            this.sqlRepo = new SQLRepository(_configuration); // pass in data retrieved from server to instance of SQLRepository
         }
 
         // returns a json formatted result of the rules saved on an sql database specified under "appsettings.json"
