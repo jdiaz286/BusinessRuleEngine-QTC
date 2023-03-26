@@ -18,7 +18,7 @@ namespace BusinessRuleEngine.Repositories
         List<Rule> rulesList = new List<Rule>();
         HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
         Dictionary<string, Rule> namesWithRules = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule object>
-        Dictionary<string, string> namesWithRuleID = new Dictionary<string, string>();
+        Dictionary<string, string> rulesWithRuleID = new Dictionary<string, string>();
 
         // create an arraylist to save the expressions
         List<Expression> expressionsList = new List<Expression>();
@@ -73,7 +73,7 @@ namespace BusinessRuleEngine.Repositories
                     namesOfRules.Add(currentRule.RuleName);
 
                     namesWithRules.Add(currentRule.RuleName, currentRule);
-                    namesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
+                    rulesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
                 }
             }
 
@@ -139,7 +139,7 @@ namespace BusinessRuleEngine.Repositories
                     sqlParams[3] = new SqlParameter("@posAct", ruleToAdd.PositiveAction);
                     sqlParams[4] = new SqlParameter("@posVal", ruleToAdd.PositiveValue);
                     sqlParams[5] = new SqlParameter("@negAct", ruleToAdd.NegativeAction);
-                    sqlParams[6] = new SqlParameter("negVal", ruleToAdd.NegativeValue);
+                    sqlParams[6] = new SqlParameter("@negVal", ruleToAdd.NegativeValue);
 
                     // add all 7 sqlParams to the command
                     for (int i = 0; i < sqlParams.Length; i++)
@@ -152,8 +152,6 @@ namespace BusinessRuleEngine.Repositories
 
                     rulesList.Add(ruleToAdd);
                     namesOfRules.Add(ruleToAdd.RuleName);
-
-                    Debug.WriteLine("rule added: " + ruleToAdd);
                 }
             }
             catch (Exception ex)
@@ -165,24 +163,39 @@ namespace BusinessRuleEngine.Repositories
         #endregion
 
         #region EditRule
-        public void editRule(EditRuleDTO ruleToEdit)
+        public void editRule(CreateRuleDTO ruleToEdit,string ruleID)
         {
             try
             {
                 // query that we want to execute to insert into rule table
-                string query = "UPDATE dbo.RuleTable ";
-                query += "SET ruleName='" + ruleToEdit.RuleName +"', expressionID='" + ruleToEdit.ExpressionID +"', " +
+                string query = "UPDATE dbo.RuleTable SET ruleName=@rName, expressionID=@eID, positiveAction=@pA, positiveValue=@pV, negativeAction=@nA, negativeValue=@nV WHERE ruleID=@rID";
+                /*query += "SET ruleName='" + ruleToEdit.RuleName +"', expressionID='" + ruleToEdit.ExpressionID +"', " +
                     "positiveAction='" + ruleToEdit.PositiveAction + "', positiveValue='" + ruleToEdit.PositiveValue + "', " +
                     "negativeAction='" + ruleToEdit.NegativeAction + "', negativeValue='" + ruleToEdit.NegativeValue + "' WHERE " +
-                    "ruleID='" + ruleToEdit.RuleID + "';";
+                    "ruleID='" + ruleToEdit.RuleID + "';";*/
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[7];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@rID", ruleID);
+                    sqlParams[1] = new SqlParameter("@rName", ruleToEdit.RuleName);
+                    sqlParams[2] = new SqlParameter("@eID", ruleToEdit.ExpressionID);
+                    sqlParams[3] = new SqlParameter("@pA", ruleToEdit.PositiveAction);
+                    sqlParams[4] = new SqlParameter("@pV", ruleToEdit.PositiveValue);
+                    sqlParams[5] = new SqlParameter("@nA", ruleToEdit.NegativeAction);
+                    sqlParams[6] = new SqlParameter("@nV", ruleToEdit.NegativeValue);
+
+                    // add all 7 sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
+
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
-
-                    Debug.WriteLine("rule deleted: " + ruleToEdit);
                 }
             }
             catch (Exception ex)
@@ -194,14 +207,12 @@ namespace BusinessRuleEngine.Repositories
         #endregion
 
         #region DeleteRule
-        public void deleteRule(string ruleToDelete)
+        public void deleteRule(string ruleName)
         {
             try
             {
                 // query that we want to execute to insert into rule table
-                string query = "DELETE FROM RuleTable WHERE ruleID= '";
-                //query += ruleToDelete + "'";
-                query += " VALUES (@rName)";
+                string query = "DELETE FROM RuleTable WHERE ruleName=(@rName)";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
@@ -209,7 +220,7 @@ namespace BusinessRuleEngine.Repositories
                     SqlParameter[] sqlParams = new SqlParameter[1];
 
                     // store all the parameters in sqlParams
-                    sqlParams[0] = new SqlParameter("@rName", ruleToDelete);
+                    sqlParams[0] = new SqlParameter("@rName", ruleName);
 
                     // add all sqlParams to the command
                     for (int i = 0; i < sqlParams.Length; i++)
@@ -218,8 +229,6 @@ namespace BusinessRuleEngine.Repositories
                     }
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
-
-                    Debug.WriteLine("rule deleted: " + ruleToDelete);
                 }
             }
             catch (Exception ex)
@@ -347,15 +356,20 @@ namespace BusinessRuleEngine.Repositories
             return namesOfRules.Contains(ruleName); // returns true if the rule exists, if not then false
         }
 
+        public bool ruleExistsWithID(string ruleID)
+        {
+            return rulesWithRuleID.ContainsValue(ruleID);
+        }
+
         // given a rule namee, return the Rule with all information
         public Rule getRule(string ruleName)
         {
             return namesWithRules[ruleName];
         }
 
-        public string getRuleID(string ruleName)
+        public string getRuleWithID(string ruleID)
         {
-            return namesWithRuleID["ruleName"];
+            return rulesWithRuleID[ruleID];
         }
 
         // method to retreive all expressions from the "expressionsList" arraylist

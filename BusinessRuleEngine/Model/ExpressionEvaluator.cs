@@ -19,8 +19,7 @@ namespace BusinessRuleEngine.Model
         JsonObject result;
 
         // constructor to pass in and instantiate the expression in the class
-        public ExpressionEvaluator(Expression expression, JsonNode jsonOject, JsonObject result
-            )
+        public ExpressionEvaluator(Expression expression, JsonNode jsonOject, JsonObject result)
         {
             this.express = expression;
             this.jsonVals = jsonOject;
@@ -30,33 +29,23 @@ namespace BusinessRuleEngine.Model
         // method to evaluate the expression and return either positive (true) or negative (false)
         public bool evaluateExpression()
         {
-            Debug.WriteLine("Entered Evaluate Expression");
-            Debug.WriteLine("current values of json node: "+jsonVals);
-
             // create a boolean variable to track the amount of time 
             bool expressionEvaluation = false;
 
             // if both operand types are equal to each other and we don't have any nestedExpressions
             if (express.LeftOperandType.ToLower().Equals(express.RightOperandType.ToLower()))
             {
-                Debug.WriteLine("Entered if statement containing Switch Statement");
-
                 // split both left and right operandTypes into individual strings, remove the "-"
                 string[] leftOperandTypeSplit = express.LeftOperandType.Split("-");
                 string[] rightOperandTypeSplit = express.RightOperandType.Split("-");
-
-                //Debug.WriteLine("Evaluating " + leftOperandTypeSplit[0] + "-" + leftOperandTypeSplit[1] + ", it is a left operand.");
-                //Debug.WriteLine("Evaluating " + rightOperandTypeSplit[0] + "-" + rightOperandTypeSplit[1] + ", it is a right operand.");
 
                 // TODO: take into account more objects besides strings and integers
                 switch (leftOperandTypeSplit[0].ToLower())
                 {
                     case "string":
-                        Debug.WriteLine("Evaluating string expression");
                         expressionEvaluation = evaluateString(leftOperandTypeSplit, rightOperandTypeSplit);
                         break;
                     case "integer":
-                        Debug.WriteLine("Evaluating integer expression.");
                         expressionEvaluation = evaluateInteger(leftOperandTypeSplit, rightOperandTypeSplit);
                         break;
                     // TODO: finish adding the boolean expression (reference lines above for an example)
@@ -106,9 +95,9 @@ namespace BusinessRuleEngine.Model
         public bool evaluateInteger(string[] leftOperandTypeSplit, string[] rightOperandTypeSplit)
         {
             bool evaluation = false;
-            Debug.WriteLine(jsonVals[leftOperandTypeSplit[1]].ToString());
+            //Debug.WriteLine(jsonVals[leftOperandTypeSplit[1]].ToString());
             float floatValue;
-            int intValue;
+            int intValue;/*
             if (jsonVals[leftOperandTypeSplit[1]].ToString().Contains(".") && float.TryParse(jsonVals[leftOperandTypeSplit[1]].ToString(), out floatValue))
             {
                 jsonVals[leftOperandTypeSplit[1]] = (int)float.Parse(jsonVals[leftOperandTypeSplit[1]].ToString());
@@ -122,7 +111,6 @@ namespace BusinessRuleEngine.Model
             {
                 //TODO: Create some sort of error object or system to indicate thru json obects that the incorrect input type has 
                 //been inputted.
-                Debug.WriteLine("Error: Value 'age' is supposed to be an integer, actual current type is string");
                 string errorMessage = "Error: Value 'age' is supposed to be an integer, actual current type is string";
                 result.Add("Error Message", errorMessage);
                 return evaluation;
@@ -149,7 +137,7 @@ namespace BusinessRuleEngine.Model
                     Debug.WriteLine("value of evaluation = " + evaluation);
                 }// if the condition below is true, return true. (parse everything as int)
             }
-
+*/
             return evaluation;
         }
     }

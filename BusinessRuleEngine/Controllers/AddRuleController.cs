@@ -8,7 +8,7 @@ using System.Text.Json.Nodes;
 
 namespace BusinessRuleEngine.Controllers
 {
-    //[Route("api/[controller]")]
+    //[Route("/[controller]")]
     [ApiController]
     public class AddRuleController : ControllerBase
     {
@@ -60,82 +60,112 @@ namespace BusinessRuleEngine.Controllers
         // add a rule based on what the user has sent (ruleID and expressionID are generated randomly)
         [HttpPut]
         [Route("AddRule")]
-        public void CreateRule(CreateRuleDTO ruleDTO)
+        public JsonObject CreateRule(CreateRuleDTO ruleDTO)
         {
+            JsonObject message = new JsonObject() { };
+
             // get the name of the rule that is going to be added
             string nameOfNewRule = ruleDTO.RuleName;
 
             // check if the rule already exists in the database
             if (sqlRepo.ruleExists(nameOfNewRule))
             {
-                Debug.WriteLine("The rule named " + nameOfNewRule + " already exists");
+                // add message letting the user know they cannot add the rule 
+                message.Add("Status", "Cannot add rule '" + nameOfNewRule + "' because it already exists");
+
+                // retreive existing rule in database
+                Rule existingRule = sqlRepo.getRule(nameOfNewRule);
+
+                var ruleValues = new JsonArray() { };
+
+                ruleValues.Add(new JsonObject()
+                {
+                    ["Rule ID"] = existingRule.RuleID,
+                    ["Rule Name"] = existingRule.RuleName,
+                    ["Expression ID"] = existingRule.ExpressionID,
+                    ["Positive Action"] = existingRule.PositiveAction,
+                    ["Positive Value"] = existingRule.PositiveValue,
+                    ["Negative Action"] = existingRule.NegativeAction,
+                    ["Positive Value"] = existingRule.NegativeValue
+                });
+
+                // to add to JsonArray (nameOfValue, valueToInsert)
+                message.Add("Existing rule values", ruleValues);
+
+            }
+            else
+            {
+                // get all the elements needed to create a rule
+                Rule newRule = new Rule
+                {
+                    RuleID = Guid.NewGuid().ToString(),
+                    RuleName = ruleDTO.RuleName,
+                    ExpressionID = ruleDTO.ExpressionID,
+                    PositiveAction = ruleDTO.PositiveAction,
+                    PositiveValue = ruleDTO.PositiveValue,
+                    NegativeAction = ruleDTO.NegativeAction,
+                    NegativeValue = ruleDTO.NegativeValue
+                };
+
+                sqlRepo.addRule(newRule);
+
+                message.Add("Status", "Successfully added rule '" + newRule.RuleName + "' with ID: " + newRule.RuleID);
             }
 
-            // TODO: if the rule does not exist, make sure that the expressionID is valid
-            
-
-            // get all the elements needed to create a rule
-            Rule newRule = new Rule
-            {
-                RuleID =  Guid.NewGuid().ToString(),
-                RuleName = ruleDTO.RuleName,
-                ExpressionID = ruleDTO.ExpressionID,
-                PositiveAction = ruleDTO.PositiveAction,
-                PositiveValue = ruleDTO.PositiveValue,
-                NegativeAction = ruleDTO.NegativeAction,
-                NegativeValue = ruleDTO.NegativeValue
-            };
-
-            sqlRepo.addRule(newRule);
-
-            Debug.WriteLine("The values in body: "+newRule);
-            //return CreatedAtAction()
+            return message;
         }
         #endregion
 
         #region EditRule
         [HttpPut]
         [Route("EditRule")]
-        public void EditRule(EditRuleDTO ruleDTO)
+        public JsonObject EditRule(CreateRuleDTO ruleDTO, string ruleID)
         {
-            // get the name of the rule that is going to be added
-            string ruleIDofRuleToEdit = ruleDTO.RuleID;
+            // create a JsonObject to let the user know if there are any errors
+            JsonObject message = new JsonObject() { };
 
-            //TODO: Needs to check if rule doesn't exist and handle accordingly
-            if (sqlRepo.ruleExists(ruleIDofRuleToEdit))
+            // if the rule doesn't exist, let the user know
+            if (!sqlRepo.ruleExistsWithID(ruleID))
             {
-                Debug.WriteLine("The rule named " + ruleIDofRuleToEdit + " already exists");
+                // add message letting the user know they cannot remove the rule 
+                message.Add("Status", "There is no rule with ID '" + ruleID + "' that exists, please type in an existing rule ID.");
+            }
+            else
+            {
+                // edit the rule on the sql repository
+                sqlRepo.editRule(ruleDTO,ruleID);
+
+                // let the user know the change has been executed successfully
+                message.Add("Status", "Successfully updated rule with ID '" + ruleID + "'."); 
             }
 
-            // TODO: if the rule does not exist, make sure that the expressionID is valid
-            sqlRepo.editRule(ruleDTO);
-
-            Debug.WriteLine("The values in body: " + ruleIDofRuleToEdit);
-            //return CreatedAtAction()
+            return message;
         }
         #endregion
 
         #region DeleteRule
-        // TODO: Add functionallity to remove rule from database
+        // /DeleteRule
+        // delete a rule given the rule id
         [HttpDelete]
         [Route("DeleteRule")]
-        //TODO: Make it input json file either be only rule name or rule id
-        public void DeleteRule(DeleteRuleDTO ruleDTO)
+        public JsonObject DeleteRule(string ruleName)
         {
-            // get the name of the rule that is going to be added
-            string nameOfNewRule = ruleDTO.RuleID;
+            JsonObject message = new JsonObject() { };
 
-            //TODO: Needs to check if rule doesn't exist and handle accordingly
-            if (sqlRepo.ruleExists(nameOfNewRule))
+            // if the rule name does not exist then let the user know
+            if (!sqlRepo.ruleExists(ruleName))
             {
-                Debug.WriteLine("The rule named " + nameOfNewRule + " already exists");
+                // add message letting the user know they cannot remove the rule 
+                message.Add("Status", "There is no rule named '" + ruleName + "' that exists, please type in an existing rule name");
+            }
+            else
+            {
+                // delete the rule from the repository given 
+                sqlRepo.deleteRule(ruleName);
+                message.Add("Status", "Successfully deleted rule named '" + ruleName + "'");
             }
 
-            // TODO: if the rule does not exist, make sure that the expressionID is valid
-            sqlRepo.deleteRule(nameOfNewRule);
-
-            Debug.WriteLine("The values in body: " + nameOfNewRule);
-            //return CreatedAtAction()
+            return message;
         }
         #endregion
 
