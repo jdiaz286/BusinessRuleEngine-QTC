@@ -3,6 +3,8 @@ using BusinessRuleEngine.DTO;
 using BusinessRuleEngine.Entities;
 using BusinessRuleEngine.Repositories;
 using System.Diagnostics;
+using System.Text.Json.Nodes;
+using System.Data;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,102 +14,123 @@ namespace BusinessRuleEngine.Controllers
     [ApiController]
     public class AddExpressionController : ControllerBase
     {
+        #region variables
         // used to import the sql repository to read all the rules from
         private readonly SQLRepository sqlRepo;
 
         // used to read the info from appsettings.json
         private readonly IConfiguration _configuration;
+        #endregion
 
+        #region constructor
         public AddExpressionController(IConfiguration configuration)
         {
             this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
             this.sqlRepo = new SQLRepository(_configuration); // pass in data retrieved from server to instance of SQLRepository
         }
+        #endregion
 
+        #region GetAllExpressions
         // returns a json formatted result of the rules saved on an sql database specified under "appsettings.json"
-
         // GET: /GetAllExpressions
         [HttpGet]
         [Route("GetAllExpressions")]
         public IEnumerable<Expression> Get()
         {
-            // create an instance of Response to return any possible errors
-            Response response = new Response();
-
             // get the rules from the sql repository and save as a variable
             var expressionsList = sqlRepo.getAllExpressions();
 
             // Debug.WriteLine("size of the list: " +info.Count);
             return expressionsList;
         }
+        #endregion
 
-
+        #region AddExpression
         // PUT /AddExpression
         [HttpPut]
         [Route("AddExpression")]
-        public void createExpression(CreateExpressionDTO expressionDTO)
+        public JsonObject createExpression(CreateExpressionDTO expressionDTO)
         {
-            // TODO: Verify that the expression doesn't already exist
+            JsonObject message = new JsonObject() { };
 
-            // get all the elements needed to create an Expression
-            Expression newExpression = new Expression
+            if (sqlRepo.expressionExists(expressionDTO))
             {
-                ExpressionID = Guid.NewGuid().ToString(),
-                LeftOperandType = expressionDTO.LeftOperandType,
-                LeftOperandValue = expressionDTO.LeftOperandValue,
-                RightOperandType = expressionDTO.RightOperandType,
-                RightOperandValue = expressionDTO.RightOperandValue,
-                Operator = expressionDTO.Operator
-            };
+                message.Add("Status", "Cannot add Expression because it already exists with id: "+sqlRepo.getExpressionID(expressionDTO));
+            }
+            else
+            {
+                // get all the elements needed to create an Expression
+                Expression newExpression = new Expression
+                {
+                    ExpressionID = Guid.NewGuid().ToString(),
+                    LeftOperandType = expressionDTO.LeftOperandType,
+                    LeftOperandValue = expressionDTO.LeftOperandValue,
+                    RightOperandType = expressionDTO.RightOperandType,
+                    RightOperandValue = expressionDTO.RightOperandValue,
+                    Operator = expressionDTO.Operator,
+                    LeftOperandName = expressionDTO.LeftOperandName,
+                    RightOperandName = expressionDTO.RightOperandName
+                };
+
+                sqlRepo.addExpression(newExpression);
+
+                message.Add("Status","Successfully added expression!");
+            }
             
-
-            sqlRepo.addExpression(newExpression);
-
-            Debug.WriteLine("The values in body: " + newExpression);
-            //return CreatedAtAction()
+            return message;
         }
+        #endregion
 
+        #region EditExpression
         [HttpPut]
         [Route("EditExpression")]
-        public void EditRule(EditExpressionDTO expressionDTO)
+        public JsonObject EditExpression(EditExpressionDTO expressionDTO, string expressionID)
         {
-            // get the name of the rule that is going to be added
-            string expressionIDofExpressionToEdit = expressionDTO.ExpressionID;
+            JsonObject message = new JsonObject() { };
 
-            //TODO: Needs to check if rule doesn't exist and handle accordingly
-            if (sqlRepo.expressionExists(expressionIDofExpressionToEdit))
+            // get the name of the rule that is going to be added
+            string expressionIDofExpressionToEdit = expressionID;
+
+            // check if the the expression id exists in the database, if not then let user know
+            if (!sqlRepo.expressionExists(expressionID))
             {
-                Debug.WriteLine("The expression id " + expressionIDofExpressionToEdit + " already exists");
+                // add message letting the user know they cannot edit the expression
+                message.Add("Status","The expression id " + expressionIDofExpressionToEdit + " does not exist. Please type in a valid expression ID");
+            }
+            else
+            {
+                // edit the expression
+                sqlRepo.editExpression(expressionDTO, expressionID);
+
+                // let the user know they successfully updated the rule
+                message.Add("Status", "Successfully updated expression with ID '" + expressionID + "'.");
             }
 
-            // TODO: if the rule does not exist, make sure that the expressionID is valid
-            sqlRepo.editExpression(expressionDTO);
-
-            Debug.WriteLine("The values in body: " + expressionIDofExpressionToEdit);
-            //return CreatedAtAction()
+            return message;
         }
+        #endregion
 
+        #region DeleteExpression
         [HttpDelete]
         [Route("DeleteExpression")]
-        public void deleteExpression(DeleteExpressionDTO expressionDTO)
+        public JsonObject deleteExpression(string expressionID)
         {
-            // TODO: Verify that the expression doesn't already exist
-
+            JsonObject message = new JsonObject() { };
             // get all the elements needed to create an Expression
 
-            string expressionToDeleteID = expressionDTO.expressionID;
-
-            if (!sqlRepo.ruleExists(expressionToDeleteID))
+            if (!sqlRepo.expressionExists(expressionID))
             {
-                Debug.WriteLine("The rule named " + expressionToDeleteID + " doesn't exists");
+                // add message letting the user know they cannot remove the rule 
+                message.Add("Status", "There is no expression with id '" + expressionID + "' that exists, please type in an existing expression id");
+            }
+            else
+            {
+                sqlRepo.deleteExpression(expressionID);
+                message.Add("Status", "Successfully deleted expression with id '" + expressionID + "'");
             }
 
-            sqlRepo.deleteExpression(expressionToDeleteID);
-
-
-
-            Debug.WriteLine("The values in body: " + expressionToDeleteID);
-            //return CreatedAtAction()
+            return message;
         }
+        #endregion
     }
 }

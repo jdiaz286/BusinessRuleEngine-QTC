@@ -8,7 +8,6 @@
 {
     public record EditExpressionDTO
     {
-        public string ExpressionID { get; init; }
 
         // TODO: Possibly change from init to set because ExpressionID should already exist in rule table
 
@@ -21,5 +20,7 @@
         public string RightOperandValue { get; init; }
 
         public string Operator { get; init; }
+        public string LeftOperandName { get; init; }
+        public string RightOperandName { get; init; }
     }
 }

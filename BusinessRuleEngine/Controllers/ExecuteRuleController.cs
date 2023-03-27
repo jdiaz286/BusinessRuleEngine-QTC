@@ -79,7 +79,7 @@ namespace BusinessRuleEngine.Controllers
         // this method will recursively keep on executing rules until we reach an output or we find an error
         private void ExecuteRule(string ruleName, JsonNode userParameters, ref JsonObject result, int currentIndexInParameters)
         {
-            
+            /*
             Debug.WriteLine("\nExecuteRule() Executed!!!");
 
             // get the rule given the rule name
@@ -128,7 +128,7 @@ namespace BusinessRuleEngine.Controllers
                     Debug.WriteLine("negative rule value added to jsonNode: "+ currentRuleInfo.NegativeValue);
                     result.Add("output"+ currentIndexInParameters, currentRuleInfo.NegativeValue);
                 }
-            }
+            }*/
         }
 
     }

@@ -1,8 +1,11 @@
 using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Linq.Expressions;
 using BusinessRuleEngine.DTO;
 using BusinessRuleEngine.Entities;
+using Expression = BusinessRuleEngine.Entities.Expression;
 using Rule = BusinessRuleEngine.Entities.Rule;
 
 namespace BusinessRuleEngine.Repositories
@@ -26,6 +29,7 @@ namespace BusinessRuleEngine.Repositories
         Dictionary<string, Expression> idsOfExpressions = new Dictionary<string, Expression>();
 
         // the contstructor for this file is designed to retrieve data from rules and expressions tables
+        #region constructor
         public SQLRepository(IConfiguration _configuration)
         {
             this._configuration = _configuration;
@@ -98,7 +102,9 @@ namespace BusinessRuleEngine.Repositories
                         LeftOperandValue = Convert.ToString(expressionDT.Rows[i]["leftOperandValue"]),
                         RightOperandType = Convert.ToString(expressionDT.Rows[i]["rightOperandType"]),
                         RightOperandValue = Convert.ToString(expressionDT.Rows[i]["rightOperandValue"]),
-                        Operator = Convert.ToString(expressionDT.Rows[i]["operator"])
+                        Operator = Convert.ToString(expressionDT.Rows[i]["operator"]),
+                        LeftOperandName = Convert.ToString(expressionDT.Rows[i]["LeftOperandName"]),
+                        RightOperandName = Convert.ToString(expressionDT.Rows[i]["RightOperandName"])
                     };
 
                     // add the current rule to the arraylist
@@ -112,7 +118,7 @@ namespace BusinessRuleEngine.Repositories
             }
             conn.Close();
         }
-
+        #endregion
 
         /*
          * The methods below are meant to manipulate Rules 
@@ -249,14 +255,14 @@ namespace BusinessRuleEngine.Repositories
             try
             {
                 // query that we want to execute to insert into expression table
-                string query = "INSERT INTO ExpressionTable (expressionID, leftOperandType, leftOperandValue, rightOperandType, rightOperandValue, operator)";
+                string query = "INSERT INTO ExpressionTable (expressionID, leftOperandType, leftOperandValue, rightOperandType, rightOperandValue, operator, rightOperandName, leftOperandName)";
                 //query += " VALUES ('" + expressionToAdd.ExpressionID + "', '" + expressionToAdd.LeftOperandType + "', '" + expressionToAdd.LeftOperandValue + "', '" + expressionToAdd.RightOperandType + "', '" + expressionToAdd.RightOperandValue + "', '" + expressionToAdd.Operator + "')";
-                query += " VALUES (@eID, @lot, @lov, @rot, @rov, @op)";
+                query += " VALUES (@eID, @lot, @lov, @rot, @rov, @op, @lon, @ron)";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
-                    SqlParameter[] sqlParams = new SqlParameter[6];
+                    SqlParameter[] sqlParams = new SqlParameter[8];
 
                     // store all the parameters in sqlParams
                     sqlParams[0] = new SqlParameter("@eID", expressionToAdd.ExpressionID);
@@ -265,6 +271,8 @@ namespace BusinessRuleEngine.Repositories
                     sqlParams[3] = new SqlParameter("@rot", expressionToAdd.RightOperandType);
                     sqlParams[4] = new SqlParameter("@rov", expressionToAdd.RightOperandValue);
                     sqlParams[5] = new SqlParameter("@op", expressionToAdd.Operator);
+                    sqlParams[6] = new SqlParameter("@lon", expressionToAdd.LeftOperandName);
+                    sqlParams[7] = new SqlParameter("@ron", expressionToAdd.RightOperandName);
 
                     // add all 6 sqlParams to the command
                     for (int i = 0; i < sqlParams.Length; i++)
@@ -277,8 +285,6 @@ namespace BusinessRuleEngine.Repositories
 
                     expressionsList.Add(expressionToAdd);
                     namesOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
-
-                    Debug.WriteLine("Expression added: " + expressionToAdd);
                 }
             }
             catch (Exception ex)
@@ -289,23 +295,37 @@ namespace BusinessRuleEngine.Repositories
         #endregion
 
         #region EditExpression
-        public void editExpression(EditExpressionDTO expressionToEdit)
+        public void editExpression(EditExpressionDTO expressionToEdit, string expressionID)
         {
             try
             {
                 // query that we want to execute to insert into rule table
                 string query = "UPDATE dbo.ExpressionTable SET ";
-                query += "leftOperandType='" + expressionToEdit.LeftOperandType + "', leftOperandValue='" + expressionToEdit.LeftOperandValue + "', " +
-                    "rightOperandType='" + expressionToEdit.RightOperandType + "', rightOperandValue='" + expressionToEdit.RightOperandValue + "', operator='" + expressionToEdit.Operator + "' WHERE " +
-                    "expressionID='" + expressionToEdit.ExpressionID + "';";
+                query += "leftOperandType=@lot, leftOperandValue=@lov, rightOperandType=@rot, rightOperandValue=@rov, operator=@op, leftOperandName=@lon, rightOperandName=@ron WHERE expressionID=@eid";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[8];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@lot", expressionToEdit.LeftOperandType);
+                    sqlParams[1] = new SqlParameter("@lov", expressionToEdit.LeftOperandValue);
+                    sqlParams[2] = new SqlParameter("@rot", expressionToEdit.RightOperandType);
+                    sqlParams[3] = new SqlParameter("@rov", expressionToEdit.RightOperandValue);
+                    sqlParams[4] = new SqlParameter("@op", expressionToEdit.Operator);
+                    sqlParams[5] = new SqlParameter("@lon", expressionToEdit.LeftOperandName);
+                    sqlParams[6] = new SqlParameter("@ron", expressionToEdit.RightOperandName);
+                    sqlParams[7] = new SqlParameter("@eid", expressionID);
+
+                    // add all 6 sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
+
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
-
-                    Debug.WriteLine("expression deleted: " + expressionToEdit);
                 }
             }
             catch (Exception ex)
@@ -322,16 +342,24 @@ namespace BusinessRuleEngine.Repositories
             try
             {
                 // query that we want to execute to insert into expression table
-                string query = "DELETE FROM dbo.ExpressionTable WHERE expressionID= '";
-                query += expressionToDelete + "';";
+                string query = "DELETE FROM dbo.ExpressionTable WHERE expressionID=@eid";
 
                 using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
                 using (var command = new SqlCommand(query, conn))
                 {
+                    SqlParameter[] sqlParams = new SqlParameter[1];
+
+                    // store all the parameters in sqlParams
+                    sqlParams[0] = new SqlParameter("@eid", expressionToDelete);
+
+                    // add all 6 sqlParams to the command
+                    for (int i = 0; i < sqlParams.Length; i++)
+                    {
+                        command.Parameters.Add(sqlParams[i]);
+                    }
+
                     conn.Open();
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
-
-                    Debug.WriteLine("expression deleted: " + expressionToDelete);
                 }
             }
             catch (Exception ex)
@@ -339,11 +367,12 @@ namespace BusinessRuleEngine.Repositories
                 Debug.WriteLine(ex.ToString());
             }
         }
-#endregion
+        #endregion
 
         /*
-         * The methods below are meant to retreive data from the 
+         * The methods below are meant to retreive data from the data structures
          */
+        #region Rule Getters
         // method to retrieve all rules from the "rulesList" arraylist
         public List<Rule> getAllRules()
         {
@@ -371,23 +400,104 @@ namespace BusinessRuleEngine.Repositories
         {
             return rulesWithRuleID[ruleID];
         }
+        #endregion
+
+        #region Expression Getters
+        // method to check if an expression exists
+        public bool expressionExists(CreateExpressionDTO expression)
+        {
+            // query that we want to execute to insert into rule table
+            string query = "SELECT * FROM ExpressionTable WHERE (leftOperandType=@lot AND leftOperandValue=@lov AND rightOperandType=@rot AND rightOperandValue=@rov AND operator=@op AND leftOperandName=@lon AND rightOperandName=@ron) ";
+
+            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+            using (var command = new SqlCommand(query, conn))
+            {
+                SqlParameter[] sqlParams = new SqlParameter[7];
+
+                // store all the parameters in sqlParams
+                sqlParams[0] = new SqlParameter("@lot", expression.LeftOperandType);
+                sqlParams[1] = new SqlParameter("@lov", expression.LeftOperandValue);
+                sqlParams[2] = new SqlParameter("@rot", expression.RightOperandType);
+                sqlParams[3] = new SqlParameter("@rov", expression.RightOperandValue);
+                sqlParams[4] = new SqlParameter("@op", expression.Operator);
+                sqlParams[5] = new SqlParameter("@lon", expression.LeftOperandName);
+                sqlParams[6] = new SqlParameter("@ron", expression.RightOperandName);
+
+                // add all 6 sqlParams to the command
+                for (int i = 0; i < sqlParams.Length; i++)
+                {
+                    command.Parameters.Add(sqlParams[i]);
+                }
+
+                conn.Open();
+
+                // get all the rows from the command call
+                var populatedTable = command.ExecuteReader();
+
+                // if the table has a row, that means there is a duplicate value in the database, return true
+                if (populatedTable.HasRows)
+                {
+                    return true;
+                }
+
+                // if the above condition isn't satisfied then there are other expressions with same values
+                return false;
+            }
+        }
 
         // method to retreive all expressions from the "expressionsList" arraylist
         public List<Expression> getAllExpressions()
         {
             return expressionsList;
         }
-
-        // TODO Possibly remove expressionExists()?
         // given a expression id, determine if it was fround from expressions table
         public bool expressionExists(string expressionID)
         {
             return namesOfExpressions.Contains(expressionID);
         }
 
-        public Expression getExpression(string expressionID)
+        // given everything but an expressionID, return the expression ID of expression object
+        public string getExpressionID(CreateExpressionDTO expression)
         {
-            return idsOfExpressions[expressionID];
+            // query that we want to execute to insert into rule table
+            string query = "SELECT * FROM ExpressionTable WHERE ";
+            query += "leftOperandType=@lot AND leftOperandValue=@lov AND rightOperandType=@rot AND rightOperandValue=@rov AND operator=@op AND leftOperandName=@lon AND rightOperandName=@ron";
+
+            using (SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString()))
+            using (var command = new SqlCommand(query, conn))
+            {
+                SqlParameter[] sqlParams = new SqlParameter[7];
+
+                // store all the parameters in sqlParams
+                sqlParams[0] = new SqlParameter("@lot", expression.LeftOperandType);
+                sqlParams[1] = new SqlParameter("@lov", expression.LeftOperandValue);
+                sqlParams[2] = new SqlParameter("@rot", expression.RightOperandType);
+                sqlParams[3] = new SqlParameter("@rov", expression.RightOperandValue);
+                sqlParams[4] = new SqlParameter("@op", expression.Operator);
+                sqlParams[5] = new SqlParameter("@lon", expression.LeftOperandName);
+                sqlParams[6] = new SqlParameter("@ron", expression.RightOperandName);
+
+                // add all 6 sqlParams to the command
+                for (int i = 0; i < sqlParams.Length; i++)
+                {
+                    command.Parameters.Add(sqlParams[i]);
+                }
+
+                conn.Open();
+
+                // get all the rows from the command call
+                var populatedTable = command.ExecuteReader();
+
+                string expressionID = "";
+
+                while (populatedTable.Read())
+                {
+                    expressionID = populatedTable["expressionID"].ToString();
+                }
+                return expressionID;
+            }
         }
+        #endregion
     }
 }
+    
