@@ -107,9 +107,17 @@ namespace BusinessRuleEngine.Controllers
                     NegativeValue = ruleDTO.NegativeValue
                 };
 
-                sqlRepo.addRule(newRule);
+                // if invalid expression, let the user know
+                if (!sqlRepo.expressionExists(newRule.ExpressionID))
+                {
+                    message.Add("Error", "Could not find expression id '" + newRule.ExpressionID+ "', please type in a valid expression id");
+                }
+                else
+                {
+                    sqlRepo.addRule(newRule);
 
-                message.Add("Status", "Successfully added rule '" + newRule.RuleName + "' with ID: " + newRule.RuleID);
+                    message.Add("Status", "Successfully added rule '" + newRule.RuleName + "' with ID: " + newRule.RuleID);
+                }
             }
 
             return message;
@@ -132,11 +140,19 @@ namespace BusinessRuleEngine.Controllers
             }
             else
             {
-                // edit the rule on the sql repository
-                sqlRepo.editRule(ruleDTO,ruleID);
+                // if invalid expression, let the user know
+                if (!sqlRepo.expressionExists(ruleDTO.ExpressionID))
+                {
+                    message.Add("Error", "Could not find expression id '" + ruleDTO.ExpressionID + "', please type in a valid expression id");
+                }
+                else
+                {
+                    // edit the rule on the sql repository
+                    sqlRepo.editRule(ruleDTO, ruleID);
 
-                // let the user know the change has been executed successfully
-                message.Add("Status", "Successfully updated rule with ID '" + ruleID + "'."); 
+                    // let the user know the change has been executed successfully
+                    message.Add("Status", "Successfully updated rule with ID '" + ruleID + "'.");
+                }
             }
 
             return message;
