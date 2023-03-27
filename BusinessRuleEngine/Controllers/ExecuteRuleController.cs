@@ -16,27 +16,27 @@ namespace BusinessRuleEngine.Controllers
     [ApiController]
     public class ExecuteRuleController : ControllerBase
     {
+        #region variables
         // used to import the sql repository to read all the rules from
         private readonly SQLRepository sqlRepo;
 
         // used to read the info from appsettings.json
         private readonly IConfiguration _configuration;
+        #endregion
 
-        // populate the class
+        #region constructor
         public ExecuteRuleController(IConfiguration configuration)
         {
             this._configuration = configuration; // retrieves configuration passed in (appsettings.json)
             this.sqlRepo = new SQLRepository(_configuration); // pass in data retrieved from server to instance of SQLRepository
         }
+        #endregion
 
         // GET: api/<RuleEngine>
         [Route("/ExecuteRule")]
         [HttpGet]
         public JsonObject startRule(string ruleName, [FromBody] JsonArray userParameters)
         {
-            // the line below is an example of how to retreive 'gender' in the first json object
-            //Debug.WriteLine("userParameters['gender']: " + userParameters[0]["gender"]);
-
             Debug.WriteLine("startRule() Executed!!!");
 
             // instantiate the JsonObject that will be returned to the user
@@ -79,7 +79,7 @@ namespace BusinessRuleEngine.Controllers
         // this method will recursively keep on executing rules until we reach an output or we find an error
         private void ExecuteRule(string ruleName, JsonNode userParameters, ref JsonObject result, int currentIndexInParameters)
         {
-            /*
+
             Debug.WriteLine("\nExecuteRule() Executed!!!");
 
             // get the rule given the rule name
@@ -90,7 +90,7 @@ namespace BusinessRuleEngine.Controllers
 
             // create an instance of Expression Evaluator and pass in json node vals and expression to evaluate
             // for more info on Expression, check under Model Folder, ExpressionEvaluator.cs
-            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters,result);
+            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters, result);
 
             // evaluate the expression of the given instance and return a boolean value
             bool expressionEvaluation = exEval.evaluateExpression();
@@ -110,7 +110,7 @@ namespace BusinessRuleEngine.Controllers
                 else
                 {
                     Debug.WriteLine("positive rule value added to jsonNode: " + currentRuleInfo.PositiveValue);
-                    result.Add("output"+currentIndexInParameters, currentRuleInfo.PositiveValue);
+                    result.Add("output" + currentIndexInParameters, currentRuleInfo.PositiveValue);
                 }
             }
             // if the evaluation is false, execute negative action
@@ -125,10 +125,10 @@ namespace BusinessRuleEngine.Controllers
                 // if it is not execute rule then just return the output value
                 else
                 {
-                    Debug.WriteLine("negative rule value added to jsonNode: "+ currentRuleInfo.NegativeValue);
-                    result.Add("output"+ currentIndexInParameters, currentRuleInfo.NegativeValue);
+                    Debug.WriteLine("negative rule value added to jsonNode: " + currentRuleInfo.NegativeValue);
+                    result.Add("output" + currentIndexInParameters, currentRuleInfo.NegativeValue);
                 }
-            }*/
+            }
         }
 
     }

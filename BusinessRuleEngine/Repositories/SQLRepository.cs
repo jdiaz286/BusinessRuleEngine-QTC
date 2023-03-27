@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 using BusinessRuleEngine.DTO;
 using BusinessRuleEngine.Entities;
@@ -15,18 +16,17 @@ namespace BusinessRuleEngine.Repositories
      */
     public class SQLRepository
     {
+        #region variables
         IConfiguration _configuration;
 
-        // create an arraylist to save the rules
-        List<Rule> rulesList = new List<Rule>();
-        HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
-        Dictionary<string, Rule> namesWithRules = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule object>
-        Dictionary<string, string> rulesWithRuleID = new Dictionary<string, string>();
+        List<Rule> rulesList = new List<Rule>(); // List of rules to store all expressions retreived from the db
+        //HashSet<string> namesOfRules = new HashSet<string>(); // this is to easily retreive the name of a rule to see if a rule is in db
+        Dictionary<string, Rule> ruleGivenName = new Dictionary<string, Rule>(); // store rule id and given rule <rule id, Rule>
+        Dictionary<string, string> ruleIDGivenName = new Dictionary<string, string>(); // store rule name alongside rule id <rule name, rule id>
 
-        // create an arraylist to save the expressions
-        List<Expression> expressionsList = new List<Expression>();
-        HashSet<string> namesOfExpressions = new HashSet<string>(); // this is to easily retreive the name of a expression to see if a expression is in db
-        Dictionary<string, Expression> idsOfExpressions = new Dictionary<string, Expression>();
+        List<Expression> expressionsList = new List<Expression>(); // List of expressions to store all expressions retreived from the db
+        Dictionary<string, Expression> expressionGivenID = new Dictionary<string, Expression>(); // store Expression given expression id <expression ID, Expression>
+        #endregion
 
         // the contstructor for this file is designed to retrieve data from rules and expressions tables
         #region constructor
@@ -34,16 +34,10 @@ namespace BusinessRuleEngine.Repositories
         {
             this._configuration = _configuration;
 
-            // create an instance of Response to return any possible errors
-            Response response = new Response();
-
-            // TODO: surround the connection in the constructor with a try catch
             // establish connection to sql database
             SqlConnection conn = new SqlConnection(_configuration.GetConnectionString("QTC-Server").ToString());
 
-            /*
-             * The lines below will retreive all info from the rules table
-             */
+            #region Rule retreival from db
             // create a query to retreive all the rules from the database
             string ruleQuery = "Select * FROM RuleTable";
             SqlDataAdapter ruleData = new SqlDataAdapter(ruleQuery, conn);
@@ -73,14 +67,13 @@ namespace BusinessRuleEngine.Repositories
                     // add the current rule to the arraylist
                     rulesList.Add(currentRule);
 
-                    // add the current rule name to the hashset
-                    namesOfRules.Add(currentRule.RuleName);
-
-                    namesWithRules.Add(currentRule.RuleName, currentRule);
-                    rulesWithRuleID.Add(currentRule.RuleName, currentRule.RuleID);
+                    ruleGivenName.Add(currentRule.RuleName, currentRule);
+                    ruleIDGivenName.Add(currentRule.RuleName, currentRule.RuleID);
                 }
             }
+            #endregion
 
+            #region Expression retrieval from db
             // create a query to retreive all the expressions from the database
             string expressionQuery = "Select * FROM ExpressionTable";
             SqlDataAdapter expressionData = new SqlDataAdapter(expressionQuery, conn);
@@ -110,12 +103,10 @@ namespace BusinessRuleEngine.Repositories
                     // add the current rule to the arraylist
                     expressionsList.Add(currentExpression);
 
-                    // add the current expression id to the hashset
-                    namesOfExpressions.Add(currentExpression.ExpressionID);
-
-                    idsOfExpressions.Add(currentExpression.ExpressionID, currentExpression);
+                    expressionGivenID.Add(currentExpression.ExpressionID, currentExpression);
                 }
             }
+            #endregion
             conn.Close();
         }
         #endregion
@@ -157,7 +148,7 @@ namespace BusinessRuleEngine.Repositories
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
                     rulesList.Add(ruleToAdd);
-                    namesOfRules.Add(ruleToAdd.RuleName);
+                    ruleIDGivenName.Add(ruleToAdd.RuleName, ruleToAdd.RuleID);
                 }
             }
             catch (Exception ex)
@@ -284,7 +275,7 @@ namespace BusinessRuleEngine.Repositories
                     command.ExecuteNonQuery(); // use ExecuteNonQuery because we don't expect to return anything
 
                     expressionsList.Add(expressionToAdd);
-                    namesOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
+                    //idsOfExpressions.Add(expressionToAdd.ExpressionID); // TODO: possibly remove this as it would be redundant to chcek if a expression exists, or maybe check existing expression another way?
                 }
             }
             catch (Exception ex)
@@ -370,7 +361,7 @@ namespace BusinessRuleEngine.Repositories
         #endregion
 
         /*
-         * The methods below are meant to retreive data from the data structures
+         * The methods below are meant to retreive data from the sql database
          */
         #region Rule Getters
         // method to retrieve all rules from the "rulesList" arraylist
@@ -382,27 +373,32 @@ namespace BusinessRuleEngine.Repositories
         // given a rule name, determine if it was found in the rules table
         public bool ruleExists(string ruleName)
         {
-            return namesOfRules.Contains(ruleName); // returns true if the rule exists, if not then false
+            return ruleIDGivenName.ContainsKey(ruleName); // returns true if the rule exists, if not then false
         }
 
         public bool ruleExistsWithID(string ruleID)
         {
-            return rulesWithRuleID.ContainsValue(ruleID);
+            return ruleIDGivenName.ContainsValue(ruleID);
         }
 
         // given a rule namee, return the Rule with all information
         public Rule getRule(string ruleName)
         {
-            return namesWithRules[ruleName];
+            return ruleGivenName[ruleName];
         }
 
         public string getRuleWithID(string ruleID)
         {
-            return rulesWithRuleID[ruleID];
+            return ruleIDGivenName[ruleID];
         }
         #endregion
 
         #region Expression Getters
+        // method to get expression given expression ID
+        public Expression getExpression(string expressionID)
+        {
+            return expressionGivenID[expressionID];
+        }
         // method to check if an expression exists
         public bool expressionExists(CreateExpressionDTO expression)
         {
@@ -453,7 +449,7 @@ namespace BusinessRuleEngine.Repositories
         // given a expression id, determine if it was fround from expressions table
         public bool expressionExists(string expressionID)
         {
-            return namesOfExpressions.Contains(expressionID);
+            return expressionGivenID.ContainsKey(expressionID); // check if dictonary contains the key with the expression ID
         }
 
         // given everything but an expressionID, return the expression ID of expression object
