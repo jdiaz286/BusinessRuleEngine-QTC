@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Nodes;
 
 // TODO: Start to make the rule engine work
@@ -32,37 +33,14 @@ namespace BusinessRuleEngine.Controllers
         }
         #endregion
 
+        #region start rule
         // GET: api/<RuleEngine>
         [Route("/ExecuteRule")]
         [HttpGet]
         public JsonObject startRule(string ruleName, [FromBody] JsonArray userParameters)
         {
-            Debug.WriteLine("startRule() Executed!!!");
-
             // instantiate the JsonObject that will be returned to the user
             JsonObject result = new JsonObject();
-
-            // use the lines below to reference how to add values to the result
-            /*
-            // create the JSONArray that will return the evaluations or errors to the user
-            JsonObject result = new JsonObject()
-            {
-            };
-            result.Add("Second value added", "some other value");
-
-            var OutputValues = new JsonArray() { };
-
-            OutputValues.Add(new JsonObject()
-            {
-                ["nested val 1"] = "test val",
-                ["nest 2"] = "rand value here",
-            });
-
-            // to add to JsonArray (nameOfValue, valueToInsert)
-            result.Add("array values",OutputValues);
-
-            Debug.WriteLine("result['Second value added']: " + result["Second value added"]);
-            */
 
             // loop through all the items in JsonArray that the user passed in parameter and pass in values as a JsonObject
             for (int objectIndex = 0; objectIndex<userParameters.Count; objectIndex++)
@@ -71,17 +49,15 @@ namespace BusinessRuleEngine.Controllers
                 ExecuteRule(ruleName, userParameters[objectIndex], ref result, objectIndex);
             }
 
-
             // return the result of the Json array 
             return result;
         }
-    
+        #endregion
+
+        #region rule execution
         // this method will recursively keep on executing rules until we reach an output or we find an error
         private void ExecuteRule(string ruleName, JsonNode userParameters, ref JsonObject result, int currentIndexInParameters)
         {
-
-            Debug.WriteLine("\nExecuteRule() Executed!!!");
-
             // get the rule given the rule name
             Rule currentRuleInfo = sqlRepo.getRule(ruleName);
 
@@ -90,15 +66,13 @@ namespace BusinessRuleEngine.Controllers
 
             // create an instance of Expression Evaluator and pass in json node vals and expression to evaluate
             // for more info on Expression, check under Model Folder, ExpressionEvaluator.cs
-            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters, result);
+            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters, result, currentIndexInParameters);
 
             // evaluate the expression of the given instance and return a boolean value
-            bool expressionEvaluation = exEval.evaluateExpression();
+            int expressionEvaluation = exEval.evaluateExpression();
 
-            Debug.WriteLine("value of expressionEvaluation: " + expressionEvaluation);
-
-            // if true evaluation, execute the positive action 
-            if (expressionEvaluation)
+            // if evaluation yields 1, execute the positive action 
+            if (expressionEvaluation==1)
             {
                 // if the rule positiveAction is "ExecuteRule" then call this uri to recurse onto the next rule
                 if (currentRuleInfo.PositiveAction.Equals("ExecuteRule"))
@@ -109,12 +83,11 @@ namespace BusinessRuleEngine.Controllers
                 // if it is not execute rule then just return the output value
                 else
                 {
-                    Debug.WriteLine("positive rule value added to jsonNode: " + currentRuleInfo.PositiveValue);
-                    result.Add("output" + currentIndexInParameters, currentRuleInfo.PositiveValue);
+                    result.Add("Entry " + currentIndexInParameters + " output", currentRuleInfo.PositiveValue);
                 }
             }
-            // if the evaluation is false, execute negative action
-            if (!expressionEvaluation)
+            // if the evaluation is 0, execute negative action
+            else if (expressionEvaluation == 0)
             {
                 // if the rule positiveAction is "ExecuteRule" then call this uri to recurse onto the next rule
                 if (currentRuleInfo.NegativeAction.Equals("ExecuteRule"))
@@ -125,11 +98,22 @@ namespace BusinessRuleEngine.Controllers
                 // if it is not execute rule then just return the output value
                 else
                 {
-                    Debug.WriteLine("negative rule value added to jsonNode: " + currentRuleInfo.NegativeValue);
-                    result.Add("output" + currentIndexInParameters, currentRuleInfo.NegativeValue);
+                    result.Add("Entry "+ currentIndexInParameters+" output", currentRuleInfo.NegativeValue);
                 }
             }
-        }
+            // if the evaluation is -2, the operator was not recognized, let the user know
+            else if (expressionEvaluation == -2)
+            {
+                //result.Add("Entry " + currentIndexInParameters + " output", "Expression operator '"+e+"' is not a valid operator");
+                Debug.WriteLine("operator not valid");
+            }
 
+            // if did not belong in any category, then let the user know
+            else
+            {
+                result.Add("Entry " + currentIndexInParameters + " output", "The input did not satisfy any of the expressions");
+            }
+        }
+        #endregion
     }
 }
