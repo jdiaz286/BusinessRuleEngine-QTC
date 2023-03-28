@@ -61,6 +61,13 @@ namespace BusinessRuleEngine.Controllers
             // get the rule given the rule name
             Rule currentRuleInfo = sqlRepo.getRule(ruleName);
 
+            // if the rule isn't found, let the user know and don't continue any further
+            if (currentRuleInfo==null)
+            {
+                result.Add("Entry " + currentIndexInParameters + " output", "Error, rule '"+ruleName+"' not found");
+                return;
+            }
+
             // get the expression given the expression id provided in the rule
             Expression currentExpressionInfo = sqlRepo.getExpression(currentRuleInfo.ExpressionID);
 

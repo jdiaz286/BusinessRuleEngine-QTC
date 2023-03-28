@@ -74,37 +74,51 @@ namespace BusinessRuleEngine.Model
         #region string evaluation
         public int evaluateString()
         {
-            int evaluation = -1;
+            Debug.WriteLine("evaluate string: " + express.RightOperandName);
+            int evaluation = -2;
 
             // if there is an equals sign in front of the operator, then determine if the strings equal each other
             if (express.Operator.Equals("=") || express.Operator.ToLower().Equals("equals"))
             {
-                // check the left/negative side, if evaluates to true, return 0
-                if (jsonVals[express.LeftOperandName] != null)
-                {
-                    if (jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower()))
-                    {
-                        evaluation = 0;
-                    }
-                }
-                else if (jsonVals[express.RightOperandName] == null)
+                // if either left or right operand is null, let the user know
+                if (jsonVals[express.LeftOperandName] == null)
                 {
                     result.Add("Entry " + currentItemIndex + " output", "Missing left value name '" + express.LeftOperandName + "' from object");
                     return -2;
                 }
-                // check the right/positive side, if evaluates to true, return 1
-                else if (jsonVals[express.RightOperandName] != null)
-                {
-                    if (jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower()))
-                    {
-                        evaluation = 1;
-                    }
-                }
-                else if (jsonVals[express.RightOperandName] == null)
+                if (jsonVals[express.RightOperandName] == null)
                 {
                     result.Add("Entry " + currentItemIndex + " output", "Missing right value name '" + express.RightOperandName + "' from object");
                     return -2;
                 }
+
+                bool leftEval = false;
+                bool rightEval = false;
+
+                // check the left/negative side, if evaluates to true, return 0
+                if (jsonVals[express.LeftOperandName] != null)
+                {
+                    leftEval = jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower());
+                    if (leftEval)
+                    {
+                        return 0;
+                    }
+                }
+                // check the right/positive side, if evaluates to true, return 1
+                if (jsonVals[express.RightOperandName] != null)
+                {
+                    rightEval = jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower());
+                    if (rightEval)
+                    {
+                        return 1;
+                    }
+                }
+                if(!leftEval && !rightEval)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Error at expression with id '" + express.ExpressionID + "', none of the conditions were satisfied");
+                    return -2;
+                }
+                
             }
             // if the operator is not recognized, return a message letting the user know
             else
@@ -119,6 +133,7 @@ namespace BusinessRuleEngine.Model
 
         public int evaluateInteger()
         {
+            Debug.WriteLine("evaluate integer: "+express.RightOperandName);
             int evaluation = -1;
 
             float leftFloatValue;
