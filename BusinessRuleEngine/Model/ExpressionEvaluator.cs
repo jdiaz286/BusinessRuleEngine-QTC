@@ -80,14 +80,30 @@ namespace BusinessRuleEngine.Model
             if (express.Operator.Equals("=") || express.Operator.ToLower().Equals("equals"))
             {
                 // check the left/negative side, if evaluates to true, return 0
-                if (jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower()))
+                if (jsonVals[express.LeftOperandName] != null)
                 {
-                    evaluation = 0;
+                    if (jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower()))
+                    {
+                        evaluation = 0;
+                    }
+                }
+                else if (jsonVals[express.RightOperandName] == null)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Missing left value name '" + express.LeftOperandName + "' from object");
+                    return -2;
                 }
                 // check the right/positive side, if evaluates to true, return 1
-                else if (jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower()))
+                else if (jsonVals[express.RightOperandName] != null)
                 {
-                    evaluation = 1;
+                    if (jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower()))
+                    {
+                        evaluation = 1;
+                    }
+                }
+                else if (jsonVals[express.RightOperandName] == null)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Missing right value name '" + express.RightOperandName + "' from object");
+                    return -2;
                 }
             }
             // if the operator is not recognized, return a message letting the user know
@@ -160,33 +176,54 @@ namespace BusinessRuleEngine.Model
             // if there is a "<" as the first character then return the evaluate as <
             if (express.Operator.Equals("<"))
             {
-                bool leftEvaluation = jsonVals[express.LeftOperandName] < ;
+                // evaluate less than symbol with left side first
+                bool leftEvaluation = ( leftIntValue < Int32.Parse(express.LeftOperandValue.ToString())  );
 
-                // check the left/negative side, if evaluates to true, return 0
-                if (jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower()))
+                // if the left is not less than, evaluate >= with the right side
+                bool rightEvaulation = ( rightIntValue >= Int32.Parse(express.RightOperandValue.ToString()) );
+
+                // check the left/negative side, if evaluates to true and right is not true, return 0
+                if (leftEvaluation)
                 {
                     evaluation = 0;
                 }
                 // check the right/positive side, if evaluates to true, return 1
-                else if (jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower()))
+                else if (rightEvaulation)
                 {
                     evaluation = 1;
                 }
-
-                /*// if the condition below is true, return true. (parse everything as int)
-                if (intValue < Int32.Parse(express.LeftOperandValue.ToString()))
-                {
-                    evaluation = true;   
-                }*/
             }
 
             // if there is a "<" as the first character then return the evaluate as >=
-            if (express.Operator.Equals(">="))
+            else if (express.Operator.Equals(">="))
             {
-                if (intValue >= Int32.Parse(express.LeftOperandValue.ToString()))
+                // evaluate less than symbol with left side first
+                bool leftEvaluation = (leftIntValue >= Int32.Parse(express.LeftOperandValue.ToString()));
+
+                // if the left is not less than, evaluate >= with the right side
+                bool rightEvaulation = ( rightIntValue < Int32.Parse(express.RightOperandValue.ToString()));
+
+                // check the left/negative side, if evaluates to true and right is not true, return 0
+                if (leftEvaluation)
                 {
-                    evaluation = true;
-                }// if the condition below is true, return true. (parse everything as int)
+                    evaluation = 0;
+                }
+                // check the right/positive side, if evaluates to true, return 1
+                else if (rightEvaulation)
+                {
+                    evaluation = 1;
+                }
+                // if no condition satisfied, tell the user
+                else
+                {
+                    result.Add("Error Message for object "+currentItemIndex, "The object did not satisfy any condition");
+                    return -2;
+                }
+            }
+            else
+            {
+                result.Add("Entry " + currentItemIndex + " output", "Expression operator '" + express.Operator + "' is not a valid operator for type 'integer'");
+                return -2;
             }
 
             return evaluation;
