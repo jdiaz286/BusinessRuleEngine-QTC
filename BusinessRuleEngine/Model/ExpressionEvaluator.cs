@@ -176,7 +176,7 @@ namespace BusinessRuleEngine.Model
                 /*// if the condition below is true, return true. (parse everything as int)
                 if (intValue < Int32.Parse(express.LeftOperandValue.ToString()))
                 {
-                    evaluation = true;
+                    evaluation = true;   
                 }*/
             }
 

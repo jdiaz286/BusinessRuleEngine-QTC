@@ -108,7 +108,7 @@ namespace BusinessRuleEngine.Controllers
                 Debug.WriteLine("operator not valid");
             }
 
-            // if did not belong in any category, then let the user know
+            // if did not belong in any category, then let the user know of error
             else
             {
                 result.Add("Entry " + currentIndexInParameters + " output", "The input did not satisfy any of the expressions");
