@@ -55,10 +55,13 @@ namespace BusinessRuleEngine.Model
                         expressionEvaluation = evaluateInteger();
                         break;
                     case "boolean":
-                        Debug.WriteLine("Evaluating integer expression.");
+                        Debug.WriteLine("Evaluating boolean expression.");
+                        break;
+                    case "float":
+                        Debug.WriteLine("Evaluating float expression");
                         break;
                     default:
-                        result.Add("", "Oject type '" + express.LeftOperandType + "' has not been implemented yet.");
+                        result.Add("Error message", "Oject type '" + express.LeftOperandType + "' has not been implemented yet or was not recognized.");
                         break;
                 }
             }
@@ -74,9 +77,9 @@ namespace BusinessRuleEngine.Model
         #region string evaluation
         public int evaluateString()
         {
-            Debug.WriteLine("evaluate string: " + express.RightOperandName);
-            int evaluation = -2;
+            int evaluation = -1;
 
+            #region string equals operation
             // if there is an equals sign in front of the operator, then determine if the strings equal each other
             if (express.Operator.Equals("=") || express.Operator.ToLower().Equals("equals"))
             {
@@ -92,6 +95,7 @@ namespace BusinessRuleEngine.Model
                     return -2;
                 }
 
+                // vars to track the evaluation of left and right side of expression
                 bool leftEval = false;
                 bool rightEval = false;
 
@@ -113,6 +117,7 @@ namespace BusinessRuleEngine.Model
                         return 1;
                     }
                 }
+                // if the right and left evaluation was not satisfied, let the user know
                 if(!leftEval && !rightEval)
                 {
                     result.Add("Entry " + currentItemIndex + " output", "Error at expression with id '" + express.ExpressionID + "', none of the conditions were satisfied");
@@ -120,6 +125,8 @@ namespace BusinessRuleEngine.Model
                 }
                 
             }
+            #endregion
+            
             // if the operator is not recognized, return a message letting the user know
             else
             {
@@ -133,7 +140,6 @@ namespace BusinessRuleEngine.Model
 
         public int evaluateInteger()
         {
-            Debug.WriteLine("evaluate integer: "+express.RightOperandName);
             int evaluation = -1;
 
             float leftFloatValue;
@@ -179,7 +185,7 @@ namespace BusinessRuleEngine.Model
                 }
                 else
                 {
-                    result.Add("Error Message", "Error: Value "+express.LeftOperandValue+" is supposed to be an integer, actual current type is string");
+                    result.Add("Error Message", "Error: Value "+express.LeftOperandValue+" is supposed to be an integer, actual current type is not a string");
                 }
             
                 evaluation = -2;
