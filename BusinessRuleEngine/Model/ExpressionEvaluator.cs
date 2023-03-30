@@ -27,7 +27,7 @@ namespace BusinessRuleEngine.Model
 
         #region constructor
         // constructor to pass in and instantiate the expression in the class
-        public ExpressionEvaluator(Expression expression, JsonNode jsonObject, JsonObject result, int currentItemIndex, ref SQLRepository sqlRepo)
+        public ExpressionEvaluator(Expression expression, JsonNode jsonObject, JsonObject result, int currentItemIndex, SQLRepository sqlRepo)
         {
             this.express = expression;
             this.jsonVals = jsonObject;
@@ -60,13 +60,27 @@ namespace BusinessRuleEngine.Model
             if (express.LeftOperandType.ToLower().Equals("expression"))
             {
                 // recursively call the evaluate expression method 
-                executeNestedExpression(express.LeftOperandValue, numOfNestedExpressions);
+                int leftNested = executeNestedExpression(express.LeftOperandValue, numOfNestedExpressions);
+                if (leftNested!=-1 || leftNested != -2)
+                {
+                    // if the left side of the expression does not throw an exception, then return 0 to execute the left side
+                    return 0;
+                }
+                else
+                {
+                    return -2;
+                }
             }
 
             // check the right expression if nested
             if (express.LeftOperandType.ToLower().Equals("expression"))
             {
-                executeNestedExpression(express.RightOperandValue, numOfNestedExpressions);
+                int rightNested = executeNestedExpression(express.RightOperandValue, numOfNestedExpressions);
+                if (rightNested != -1 || rightNested != -2)
+                {
+                    // if the right side of the expression does not throw an exception, then return 1 to execute the right side
+                    return 1;
+                }
             }
 
             if (express.LeftOperandType.ToLower().Equals(express.RightOperandType.ToLower()))
@@ -81,13 +95,11 @@ namespace BusinessRuleEngine.Model
                         expressionEvaluation = evaluateInteger();
                         break;
                     case "boolean":
-                        Debug.WriteLine("Evaluating boolean expression.");
                         expressionEvaluation = evaluateBoolean();
-                        Debug.WriteLine("Boolean Evaluated.");
                         break;
-                    case "float":
+                    /*case "float":
                         Debug.WriteLine("Evaluating float expression");
-                        break;
+                        break;*/
                     default:
                         result.Add("Error message", "Oject type '" + express.LeftOperandType + "' has not been implemented yet or was not recognized.");
                         break;
@@ -100,13 +112,13 @@ namespace BusinessRuleEngine.Model
         }
 
         // method that handles logic for a nested expression 
-        public void executeNestedExpression(string expressionID, int numOfNestedExpressions)
+        public int executeNestedExpression(string expressionID, int numOfNestedExpressions)
         {
             var nextExpression = sqlRepo.getExpression(expressionID);
 
-            ExpressionEvaluator nestedExpressionEvaluator = new ExpressionEvaluator(nextExpression, jsonVals, result, currentItemIndex, ref sqlRepo);
+            ExpressionEvaluator nestedExpressionEvaluator = new ExpressionEvaluator(nextExpression, jsonVals, result, currentItemIndex, sqlRepo);
 
-            nestedExpressionEvaluator.evaluateExpression(numOfNestedExpressions);
+            return nestedExpressionEvaluator.evaluateExpression(numOfNestedExpressions);
         }
 
         /* 

@@ -73,7 +73,7 @@ namespace BusinessRuleEngine.Controllers
 
             // create an instance of Expression Evaluator and pass in json node vals and expression to evaluate
             // for more info on Expression, check under Model Folder, ExpressionEvaluator.cs
-            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters, result, currentIndexInParameters, ref sqlRepo);
+            ExpressionEvaluator exEval = new ExpressionEvaluator(currentExpressionInfo, userParameters, result, currentIndexInParameters, sqlRepo);
 
             // evaluate the expression of the given instance and return a boolean value, pass in 0 to represent count of nested expressions
             int expressionEvaluation = exEval.evaluateExpression(0);
