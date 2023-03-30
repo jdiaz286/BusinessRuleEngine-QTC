@@ -80,12 +80,14 @@ namespace BusinessRuleEngine.Model
                     case "integer":
                         expressionEvaluation = evaluateInteger();
                         break;
-                    /*case "boolean":
+                    case "boolean":
                         Debug.WriteLine("Evaluating boolean expression.");
+                        expressionEvaluation = evaluateBoolean();
+                        Debug.WriteLine("Boolean Evaluated.");
                         break;
                     case "float":
                         Debug.WriteLine("Evaluating float expression");
-                        break;*/
+                        break;
                     default:
                         result.Add("Error message", "Oject type '" + express.LeftOperandType + "' has not been implemented yet or was not recognized.");
                         break;
@@ -139,6 +141,7 @@ namespace BusinessRuleEngine.Model
                 if (jsonVals[express.LeftOperandName] != null)
                 {
                     leftEval = jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower());
+                    Debug.WriteLine("Left operandName " + express.LeftOperandName);
                     if (leftEval)
                     {
                         return 0;
@@ -280,6 +283,70 @@ namespace BusinessRuleEngine.Model
             else
             {
                 result.Add("Entry " + currentItemIndex + " output", "Expression operator '" + express.Operator + "' is not a valid operator for type 'integer'");
+                return -2;
+            }
+
+            return evaluation;
+        }
+
+        public int evaluateBoolean()
+        {
+            int evaluation = -1;
+
+            #region string equals operation
+            // if there is an equals sign in front of the operator, then determine if the strings equal each other
+            if (express.Operator.Equals("=") || express.Operator.ToLower().Equals("equals") || express.Operator.Equals("!=") || express.Operator.Equals("not equals"))
+            {
+                // if either left or right operand is null, let the user know
+                if (jsonVals[express.LeftOperandName] == null)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Missing left value name '" + express.LeftOperandName + "' from object");
+                    return -2;
+                }
+                if (jsonVals[express.RightOperandName] == null)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Missing right value name '" + express.RightOperandName + "' from object");
+                    return -2;
+                }
+
+                // vars to track the evaluation of left and right side of expression
+                bool leftEval = false;
+                bool rightEval = false;
+
+                // check the left/negative side, if evaluates to true, return 0
+                if (jsonVals[express.LeftOperandName] != null)
+                {
+                    leftEval = jsonVals[express.LeftOperandName].ToString().ToLower().Equals(express.LeftOperandValue.ToLower());
+                    Debug.WriteLine("Left operandName " + express.LeftOperandName);
+                    if (leftEval)
+                    {
+                        return 0;
+                    }
+                }
+                // check the right/positive side, if evaluates to true, return 1
+                if (jsonVals[express.RightOperandName] != null)
+                {
+                    rightEval = jsonVals[express.RightOperandName].ToString().ToLower().Equals(express.RightOperandValue.ToLower());
+                    Debug.WriteLine("Right operandName " + express.RightOperandName);
+                    if (rightEval)
+                    {
+                        return 1;
+                    }
+                }
+                // if the right and left evaluation was not satisfied, let the user know
+                if (!leftEval && !rightEval)
+                {
+                    result.Add("Entry " + currentItemIndex + " output", "Error at expression with id '" + express.ExpressionID + "', none of the conditions were satisfied");
+                    return -2;
+                }
+
+            }
+            #endregion
+
+            // if the operator is not recognized, return a message letting the user know
+            else
+            {
+                result.Add("Entry " + currentItemIndex + " output", "Expression operator '" + express.Operator + "' is not a valid operator for type 'string'");
                 return -2;
             }
 

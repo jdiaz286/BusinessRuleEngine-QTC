@@ -19,7 +19,7 @@ namespace BusinessRuleEngine.Controllers
     {
         #region variables
         // used to import the sql repository to read all the rules from
-        private readonly SQLRepository sqlRepo;
+        private SQLRepository sqlRepo;
 
         // used to read the info from appsettings.json
         private readonly IConfiguration _configuration;
@@ -43,7 +43,7 @@ namespace BusinessRuleEngine.Controllers
             JsonObject result = new JsonObject();
 
             // loop through all the items in JsonArray that the user passed in parameter and pass in values as a JsonObject
-            for (int objectIndex = 0; objectIndex<userParameters.Count; objectIndex++)
+            for (int objectIndex = 0; objectIndex < userParameters.Count; objectIndex++)
             {
                 // pass in rule name, body parameters, and reference to result array to ExecuteRule() method
                 ExecuteRule(ruleName, userParameters[objectIndex], ref result, objectIndex);
@@ -62,9 +62,9 @@ namespace BusinessRuleEngine.Controllers
             Rule currentRuleInfo = sqlRepo.getRule(ruleName);
 
             // if the rule isn't found, let the user know and don't continue any further
-            if (currentRuleInfo==null)
+            if (currentRuleInfo == null)
             {
-                result.Add("Entry " + currentIndexInParameters + " output", "Error, rule '"+ruleName+"' not found");
+                result.Add("Entry " + currentIndexInParameters + " output", "Error, rule '" + ruleName + "' not found");
                 return;
             }
 
@@ -79,7 +79,7 @@ namespace BusinessRuleEngine.Controllers
             int expressionEvaluation = exEval.evaluateExpression(0);
 
             // if evaluation yields 1, execute the positive action 
-            if (expressionEvaluation==1)
+            if (expressionEvaluation == 1)
             {
                 // if the rule positiveAction is "ExecuteRule" then call this uri to recurse onto the next rule
                 if (currentRuleInfo.PositiveAction.Equals("ExecuteRule"))
@@ -105,7 +105,7 @@ namespace BusinessRuleEngine.Controllers
                 // if it is not execute rule then just return the output value
                 else
                 {
-                    result.Add("Entry "+ currentIndexInParameters+" output", currentRuleInfo.NegativeValue);
+                    result.Add("Entry " + currentIndexInParameters + " output", currentRuleInfo.NegativeValue);
                 }
             }
             // if the evaluation is -2, the operator was not recognized, let the user know
