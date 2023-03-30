@@ -1,4 +1,5 @@
 ﻿using BusinessRuleEngine.Entities;
+using BusinessRuleEngine.Repositories;
 using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Text.Json.Nodes;
@@ -20,28 +21,53 @@ namespace BusinessRuleEngine.Model
         // save the JsonNode of the current value that we want to evaluate
         JsonNode jsonVals;
         JsonObject result;
+
+        SQLRepository sqlRepo;
         #endregion
 
         #region constructor
         // constructor to pass in and instantiate the expression in the class
-        public ExpressionEvaluator(Expression expression, JsonNode jsonOject, JsonObject result, int currentItemIndex)
+        public ExpressionEvaluator(Expression expression, JsonNode jsonObject, JsonObject result, int currentItemIndex, ref SQLRepository sqlRepo)
         {
             this.express = expression;
-            this.jsonVals = jsonOject;
+            this.jsonVals = jsonObject;
             this.result = result;
             this.currentItemIndex = currentItemIndex;
+            this.sqlRepo = sqlRepo;
         }
         #endregion
 
         // method to evaluate the expression and return either positive (true) or negative (false)
-        public int evaluateExpression()
+        public int evaluateExpression(int numOfNestedExpressions)
         {
+            // increase the count of the nested 
+            numOfNestedExpressions++;
+
             // create a boolean variable to track the amount of time 
             int expressionEvaluation = -1;
 
-            // check the left expression if nested
+            Debug.WriteLine("nested expression count: " + numOfNestedExpressions);
+
+            // if the current count of nested expressions exceeds 10, then the rule engine will restrict the user from using their given expression
+            if (numOfNestedExpressions>10)
+            {
+                result.Add("Entry " + currentItemIndex + " output", "The expression used references more than 10 expressions, please use a different expression with at most 10 expression references");
+                return -2;
+            }
+
+            // the next 2 conditionals check if a statement is nested, if a statement is nested, 
+            // check the left expression type to see if "Expression". if nested then continue onto 
+            if (express.LeftOperandType.ToLower().Equals("expression"))
+            {
+                // recursively call the evaluate expression method 
+                executeNestedExpression(express.LeftOperandValue, numOfNestedExpressions);
+            }
 
             // check the right expression if nested
+            if (express.LeftOperandType.ToLower().Equals("expression"))
+            {
+                executeNestedExpression(express.RightOperandValue, numOfNestedExpressions);
+            }
 
             if (express.LeftOperandType.ToLower().Equals(express.RightOperandType.ToLower()))
             {
@@ -54,12 +80,12 @@ namespace BusinessRuleEngine.Model
                     case "integer":
                         expressionEvaluation = evaluateInteger();
                         break;
-                    case "boolean":
+                    /*case "boolean":
                         Debug.WriteLine("Evaluating boolean expression.");
                         break;
                     case "float":
                         Debug.WriteLine("Evaluating float expression");
-                        break;
+                        break;*/
                     default:
                         result.Add("Error message", "Oject type '" + express.LeftOperandType + "' has not been implemented yet or was not recognized.");
                         break;
@@ -69,6 +95,16 @@ namespace BusinessRuleEngine.Model
 
             // return the evaluation of the expression
             return expressionEvaluation;
+        }
+
+        // method that handles logic for a nested expression 
+        public void executeNestedExpression(string expressionID, int numOfNestedExpressions)
+        {
+            var nextExpression = sqlRepo.getExpression(expressionID);
+
+            ExpressionEvaluator nestedExpressionEvaluator = new ExpressionEvaluator(nextExpression, jsonVals, result, currentItemIndex, ref sqlRepo);
+
+            nestedExpressionEvaluator.evaluateExpression(numOfNestedExpressions);
         }
 
         /* 
